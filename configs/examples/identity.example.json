@@ -4,8 +4,21 @@
     "reviewed_at": "YYYY-MM-DD",
     "proof": "URLs and evidence showing both contracts track the same underlying, units and settlement",
     "instruments": {
-      "bybit": {"symbol": "EXAMPLEUSDT", "base": "EXAMPLE", "multiplier": "1"},
-      "bingx": {"symbol": "EXAMPLE-USDT", "base": "EXAMPLE", "multiplier": "1"}
+      "bybit": {
+        "symbol": "EXAMPLEUSDT",
+        "base": "EXAMPLE",
+        "multiplier": "1"
+      },
+      "bingx": {
+        "symbol": "EXAMPLE-USDT",
+        "base": "EXAMPLE",
+        "multiplier": "1"
+      }
+    },
+    "review_status": "REVIEWED",
+    "sources": {
+      "bybit": "https://www.bybit.com/REPLACE_WITH_ACTUAL_UNDERLYING_EVIDENCE",
+      "bingx": "https://bingx.com/REPLACE_WITH_ACTUAL_UNDERLYING_EVIDENCE"
     }
   }
 ]

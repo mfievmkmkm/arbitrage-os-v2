@@ -104,7 +104,12 @@ def test_registry_binding():
         "asset_id": "bitcoin",
         "proof": "test evidence",
         "reviewed_at": "2026-10-26",
-        "instruments": {"bybit": {"symbol": "BTCUSDT", "base": "BTC", "multiplier": "1"}},
+        "review_status": "REVIEWED",
+        "sources": {"bybit": "https://www.bybit.com/evidence", "bingx": "https://bingx.com/evidence"},
+        "instruments": {
+            "bybit": {"symbol": "BTCUSDT", "base": "BTC", "multiplier": "1"},
+            "bingx": {"symbol": "BTC-USDT", "base": "BTC", "multiplier": "1"},
+        },
     }
     assert identify(instrument(asset_id=None), [row]).asset_id == "bitcoin"
 

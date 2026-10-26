@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import time
 import uuid
 from collections import deque
 
@@ -10,6 +12,44 @@ class Journal:
         self.queue = asyncio.Queue(capacity)
         self.recent = deque(maxlen=500)
         self.written = self.dropped = self.failures = 0
+        self.last_write_error = None
+        self.storage = {"state": "NOT_MEASURED"}
+
+    async def monitor_storage(self, stop):
+        previous = None
+        while not stop.is_set():
+            if self.pool:
+                try:
+                    async with self.pool.acquire() as conn:
+                        size = await conn.fetchval("SELECT pg_database_size(current_database())")
+                        table = await conn.fetchval("SELECT pg_total_relation_size('signal_events')")
+                    now = time.monotonic()
+                    capacity = int(os.getenv("POSTGRES_VOLUME_MB", "0")) * 1000000
+                    ratio = size / capacity if capacity else None
+                    self.storage = {
+                        "database_bytes": size,
+                        "signal_events_bytes": table,
+                        "declared_volume_bytes": capacity or None,
+                        "state": "CRITICAL"
+                        if ratio and ratio >= 0.85
+                        else ("WARNING" if ratio and ratio >= 0.7 else "MEASURED"),
+                        "sampled_at_ms": int(time.time() * 1000),
+                        "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+                        "growth_bytes_per_second": max(0, (size - previous[0]) / (now - previous[1]))
+                        if previous
+                        else None,
+                    }
+                    previous = size, now
+                except Exception as exc:
+                    self.storage = {
+                        **self.storage,
+                        "state": "MEASUREMENT_FAILED",
+                        "error": type(exc).__name__,
+                    }
+            try:
+                await asyncio.wait_for(stop.wait(), 60)
+            except TimeoutError:
+                pass
 
     async def connect(self):
         if self.dsn:
@@ -51,9 +91,11 @@ class Journal:
                                 batch,
                             )
                     self.written += len(batch)
+                    self.last_write_error = None
                     batch.clear()
-                except Exception:
+                except Exception as exc:
                     self.failures += 1
+                    self.last_write_error = type(exc).__name__
             if stop.is_set() and batch and self.failures:
                 # Shutdown must report unsaved records rather than hang indefinitely.
                 break

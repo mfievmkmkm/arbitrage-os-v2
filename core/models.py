@@ -29,6 +29,11 @@ class Reason(StrEnum):
     INVALID_TIME = "INVALID_MARKET_TIME"
     OUTAGE = "DATA_PROVIDER_OUTAGE"
     SLIPPAGE = "SLIPPAGE_LIMIT_EXCEEDED"
+    FUNDING_MISSING = "FUNDING_NOT_RECEIVED"
+    FUNDING_STALE = "FUNDING_STALE"
+    FUNDING_INTERVAL = "FUNDING_INTERVAL_UNVERIFIED"
+    FUNDING_TIME = "FUNDING_SETTLEMENT_PASSED"
+    FUNDING_INVALID = "FUNDING_INVALID"
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +80,9 @@ class Quote:
     ask_qty: Decimal
     source_ms: int
     received: float = field(default_factory=time.monotonic)
+    source: str = "PUBLIC_WS"
+    matching_engine_ms: int | None = None
+    sequence: int | None = None
 
     def valid(self):
         return (
@@ -118,6 +126,7 @@ class Funding:
     next_ms: int
     interval_ms: int
     received: float = field(default_factory=time.monotonic)
+    source: str = "PUBLIC_WS"
 
 
 @dataclass(slots=True)

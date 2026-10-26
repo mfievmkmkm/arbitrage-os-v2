@@ -3,6 +3,7 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def load_registry(path="configs/identity.json"):
@@ -11,9 +12,21 @@ def load_registry(path="configs/identity.json"):
 
 def identify(instrument, registry):
     for row in registry:
+        sources = row.get("sources", {})
+        reviewed_sources = all(
+            urlparse(sources.get(v, "")).hostname in hosts
+            for v, hosts in (
+                ("bybit", {"www.bybit.com", "bybit.com"}),
+                ("bingx", {"www.bingx.com", "bingx.com"}),
+            )
+        )
         binding = row.get("instruments", {}).get(instrument.venue)
         if (
             binding
+            and row.get("review_status") == "REVIEWED"
+            and reviewed_sources
+            and set(row.get("instruments", {})) == {"bybit", "bingx"}
+            and instrument.spec_verified
             and binding["symbol"] == instrument.symbol
             and binding["base"] == instrument.base
             and instrument.quote == instrument.settle == "USDT"

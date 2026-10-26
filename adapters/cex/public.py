@@ -221,6 +221,48 @@ class BybitParser:
         return symbol, quote, funding
 
 
+class BybitTopParser:
+    """Level 1 is snapshot-only, including real unchanged snapshots every 3 seconds.
+
+    ts confirms the supplied snapshot; cts remains separate matching-engine diagnostics.
+    No ticker delta, mark-price update or heartbeat can refresh this quote.
+    """
+
+    def __init__(self):
+        self.last = {}
+
+    def parse(self, msg):
+        if not msg.get("topic", "").startswith("orderbook.1."):
+            return None
+        if msg.get("type") != "snapshot":
+            raise ProviderError("TOP_OF_BOOK_REQUIRES_SNAPSHOT")
+        row = msg["data"]
+        symbol = row["s"]
+        if msg["topic"] != "orderbook.1." + symbol:
+            raise ProviderError("TOP_OF_BOOK_SYMBOL_MISMATCH")
+        ts, seq = int(msg["ts"]), int(row["u"])
+        prior = self.last.get(symbol)
+        if ts <= 0 or (prior and (ts < prior[0] or (seq < prior[1] and seq != 1))):
+            raise ProviderError("INVALID_MARKET_TIME")
+        self.last[symbol] = ts, seq
+        bids, asks = row["b"], row["a"]
+        if len(bids) > 1 or len(asks) > 1:
+            raise ProviderError("TOP_OF_BOOK_EXCEEDS_ONE_LEVEL")
+        # An empty snapshot must revoke the previous quote, never leave it in cache.
+        bid, bqty = bids[0] if bids else ("0", "0")
+        ask, aqty = asks[0] if asks else ("0", "0")
+        return symbol, Quote(
+            D(bid),
+            D(ask),
+            D(bqty),
+            D(aqty),
+            ts,
+            source="BYBIT_ORDERBOOK_1_SNAPSHOT",
+            matching_engine_ms=int(msg["cts"]) if "cts" in msg else None,
+            sequence=seq,
+        )
+
+
 class IncrementalBook:
     """Bybit u is monotonic, not guaranteed consecutive; BingX IDs are consecutive."""
 
@@ -281,11 +323,12 @@ async def heartbeat(ws, venue):
 
 async def stream(session, venue, symbols, emit, health, metrics, stop, depth=False, intervals=None):
     backoff = 1
+    role = "depth" if depth else "quotes"
     while not stop.is_set():
-        parser = BybitParser()
-        parser.funding_intervals = intervals or {}
+        parser = BybitTopParser()
         books = {s: IncrementalBook(venue) for s in symbols}
         heartbeat_task = None
+        connected = intentional = False
         try:
             async with session.ws_connect(
                 WS[venue],
@@ -294,14 +337,17 @@ async def stream(session, venue, symbols, emit, health, metrics, stop, depth=Fal
                 timeout=ClientWSTimeout(ws_receive=45, ws_close=10),
             ) as ws:
                 metrics[f"{venue}_ws_connected"] += 1
+                metrics[f"{venue}_{role}_ws_connected"] += 1
                 health["connections"] = health.get("connections", 0) + 1
+                health[f"{role}_connections"] = health.get(f"{role}_connections", 0) + 1
+                connected = True
                 if venue == "bybit":
                     for i in range(0, len(symbols), 10):
                         await ws.send_json(
                             {
                                 "op": "subscribe",
                                 "args": [
-                                    f"orderbook.50.{s}" if depth else f"tickers.{s}"
+                                    f"orderbook.50.{s}" if depth else f"orderbook.1.{s}"
                                     for s in symbols[i : i + 10]
                                 ],
                             }
@@ -363,8 +409,8 @@ async def stream(session, venue, symbols, emit, health, metrics, stop, depth=Fal
                     elif venue == "bybit":
                         parsed = parser.parse(msg)
                         if parsed:
-                            s, quote, funding = parsed
-                            await emit(venue, s, quote, funding, None, received)
+                            s, quote = parsed
+                            await emit(venue, s, quote, None, None, received)
                     elif "@bookTicker" in msg.get("dataType", ""):
                         r = msg["data"]
                         s = r.get("s", msg["dataType"].split("@")[0])
@@ -378,18 +424,28 @@ async def stream(session, venue, symbols, emit, health, metrics, stop, depth=Fal
                     if stop.is_set():
                         break
         except asyncio.CancelledError:
+            intentional = True
             raise
         except Exception as exc:
             metrics["provider_errors"] += 1
+            metrics[f"{venue}_{role}_provider_errors"] += 1
             health["last_error"] = type(exc).__name__ + ":" + str(exc)[:120]
+            health[f"{role}_last_error_code"] = getattr(exc, "code", type(exc).__name__)
         finally:
             if heartbeat_task:
                 heartbeat_task.cancel()
                 await asyncio.gather(heartbeat_task, return_exceptions=True)
-            health["connections"] = max(0, health.get("connections", 1) - 1)
+            if connected:
+                health["connections"] = max(0, health.get("connections", 1) - 1)
+                health[f"{role}_connections"] = max(0, health.get(f"{role}_connections", 1) - 1)
             # Invalidate on disconnect immediately rather than waiting for TTL.
-            await emit(venue, "*", None, None, None, time.monotonic(), invalidate=symbols, depth=depth)
+            kwargs = {"invalidate": symbols, "depth": depth}
+            if intentional and depth:
+                kwargs["invalidate_reason"] = "ORDERBOOK_UNAVAILABLE"
+                metrics[f"{venue}_depth_planned_unsubscribes"] += 1
+            await emit(venue, "*", None, None, None, time.monotonic(), **kwargs)
         metrics["ws_reconnects"] += 1
+        metrics[f"{venue}_{role}_ws_reconnects"] += 1
         try:
             await asyncio.wait_for(stop.wait(), timeout=backoff + random.random())
         except TimeoutError:

@@ -1,0 +1,105 @@
+{
+  "reviewed_at": "2026-10-27",
+  "method": "Reviewed native underlying asset descriptions on both venues plus actual normalized public contract catalog rows. Exact symbol/base/multiplier and live USDT quote/settlement/spec gates still required. Not symbol equality and not a token-address proof. No wrapped assets, prefixes or alias inference.",
+  "contract_specs_sources": [
+    "https://www.bybit.com/en/help-center/article/?id=000001060&language=en_US",
+    "https://bybit-exchange.github.io/docs/v5/market/instrument",
+    "https://github.com/BingX-API/api-ai-skills/blob/main/skills/swap-market/api-reference.md"
+  ],
+  "catalog_evidence": "docs/evidence/railway-2026-10-27.json",
+  "assets": [
+    {
+      "asset_id": "native:bitcoin",
+      "name": "Bitcoin",
+      "sources": {
+        "bybit": "https://www.bybit.com/en/price/bitcoin/",
+        "bingx": "https://bingx.com/en/price/bitcoin"
+      },
+      "review_summary": "Both venues identify BTC as native Bitcoin. These specific linear perpetual catalog bindings use one native base unit, USDT quote/settlement; numeric prefixes and wrappers are excluded. Distinct venue price indices and funding remain independent economic inputs.",
+      "catalog_rows": [
+        {
+          "venue": "bybit",
+          "symbol": "BTCUSDT",
+          "base": "BTC",
+          "quote": "USDT",
+          "settle": "USDT",
+          "step": "0.001",
+          "minimum": "0.001",
+          "min_notional": "5",
+          "tick": "0.10",
+          "multiplier": "1",
+          "spec_verified": true,
+          "asset_id": null,
+          "identity_proof": null,
+          "taker_fee": "0.00055",
+          "fee_source": "PUBLIC_NON_VIP_SCHEDULE_2026_10_26_NOT_ACCOUNT_SPECIFIC"
+        },
+        {
+          "venue": "bingx",
+          "symbol": "BTC-USDT",
+          "base": "BTC",
+          "quote": "USDT",
+          "settle": "USDT",
+          "step": "0.0001",
+          "minimum": "0.0001",
+          "min_notional": "2",
+          "tick": "0.1",
+          "multiplier": "1",
+          "spec_verified": true,
+          "asset_id": null,
+          "identity_proof": null,
+          "taker_fee": "0.0005",
+          "fee_source": "PUBLIC_CONTRACT_SCHEDULE"
+        }
+      ],
+      "catalog_rows_sha256": "d57e25abc33a29c9f9ccaf63ad572e9b27d4a6ef9c55938ee928335a8cafe9b2"
+    },
+    {
+      "asset_id": "native:ethereum",
+      "name": "Ethereum",
+      "sources": {
+        "bybit": "https://www.bybit.com/en/price/ethereum/",
+        "bingx": "https://bingx.com/en/price/ethereum"
+      },
+      "review_summary": "Both venues identify ETH as native Ethereum. These specific linear perpetual catalog bindings use one native base unit, USDT quote/settlement; numeric prefixes and wrappers are excluded. Distinct venue price indices and funding remain independent economic inputs.",
+      "catalog_rows": [
+        {
+          "venue": "bybit",
+          "symbol": "ETHUSDT",
+          "base": "ETH",
+          "quote": "USDT",
+          "settle": "USDT",
+          "step": "0.01",
+          "minimum": "0.01",
+          "min_notional": "5",
+          "tick": "0.01",
+          "multiplier": "1",
+          "spec_verified": true,
+          "asset_id": null,
+          "identity_proof": null,
+          "taker_fee": "0.00055",
+          "fee_source": "PUBLIC_NON_VIP_SCHEDULE_2026_10_26_NOT_ACCOUNT_SPECIFIC"
+        },
+        {
+          "venue": "bingx",
+          "symbol": "ETH-USDT",
+          "base": "ETH",
+          "quote": "USDT",
+          "settle": "USDT",
+          "step": "0.01",
+          "minimum": "0.01",
+          "min_notional": "2",
+          "tick": "0.01",
+          "multiplier": "1",
+          "spec_verified": true,
+          "asset_id": null,
+          "identity_proof": null,
+          "taker_fee": "0.0005",
+          "fee_source": "PUBLIC_CONTRACT_SCHEDULE"
+        }
+      ],
+      "catalog_rows_sha256": "8f99e0ae919ff192e06d71dd072f1dab4394782abbe3f45da4d22948461813a8"
+    }
+  ],
+  "coverage_note": "Only BTC and ETH reviewed here; all other shared labels remain unverified. Future DEX links require exact chain/address proof and cannot reuse this native-only inference."
+}

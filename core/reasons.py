@@ -1,6 +1,11 @@
 from core.models import Reason
 
 REASONS = {
+    Reason.FUNDING_MISSING: ("NET", "Данные funding ещё не получены от биржи"),
+    Reason.FUNDING_STALE: ("NET", "Funding не подтверждался более 120 секунд или время некорректно"),
+    Reason.FUNDING_INTERVAL: ("NET", "Интервал выплат funding не подтверждён"),
+    Reason.FUNDING_TIME: ("NET", "Время следующей выплаты funding уже прошло; требуется обновление"),
+    Reason.FUNDING_INVALID: ("NET", "Источник вернул некорректную ставку funding"),
     "PUBLIC_API_REGION_RESTRICTED": ("INFRA", "Источник явно блокирует public API по стране IP сервера"),
     Reason.SLIPPAGE: ("DEPTH", "Недостаточно объёма в пределах заданного проскальзывания"),
     "PUBLIC_API_HTML_UNAVAILABLE": (

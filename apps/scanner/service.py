@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 from adapters.cex.public import PublicHTTP, catalog, stream
 from core.config import Config
-from core.evaluator import evaluate_sizes, fresh
+from core.evaluator import evaluate_sizes, fresh, funding_rejections
 from core.identity import compatible, identify, load_registry
 from core.models import D, Funding, Reason
 from infrastructure.journal import Journal
@@ -59,6 +59,7 @@ class Scanner:
         self.tasks = []
         self.feed_tasks = {}
         self.depth_tasks = {}
+        self.depth_selected_at = {}
         self.intervals = {}
         self.last_journal = {}
         self.started = time.time()
@@ -77,12 +78,23 @@ class Scanner:
                     self.rejections[reason] += 1
                     self.journal.append(asdict(s))
 
-    async def emit(self, venue, symbol, quote, funding, book, received, invalidate=None, depth=False):
+    async def emit(
+        self,
+        venue,
+        symbol,
+        quote,
+        funding,
+        book,
+        received,
+        invalidate=None,
+        depth=False,
+        invalidate_reason=None,
+    ):
         if invalidate:
             for s in invalidate:
                 (self.books if depth else self.quotes).pop((venue, s), None)
                 self.invalid_before[(venue, s, depth)] = received
-            self.revoke(venue, invalidate, Reason.OUTAGE)
+            self.revoke(venue, invalidate, invalidate_reason or Reason.OUTAGE)
             return
         try:
             self.queue.put_nowait((venue, symbol, quote, funding, book, received))
@@ -271,6 +283,28 @@ class Scanner:
 
     async def funding_loop(self):
         while not self.stop.is_set():
+            if "bybit" in self.http:
+                try:
+                    response = await self.http["bybit"].get("/v5/market/tickers", {"category": "linear"})
+                    for row in response["result"]["list"]:
+                        symbol = row["symbol"]
+                        if ("bybit", symbol) not in self.instruments:
+                            continue
+                        try:
+                            interval = int(row.get("fundingIntervalHour") or 0) * 3600000
+                            interval = interval or self.intervals.get(symbol, 0)
+                            self.funding[("bybit", symbol)] = Funding(
+                                D(row["fundingRate"]),
+                                int(row["nextFundingTime"]),
+                                interval,
+                                source="BYBIT_PUBLIC_TICKERS_REST",
+                            )
+                        except (KeyError, ValueError, ArithmeticError):
+                            self.metrics["bybit_funding_invalid_rows"] += 1
+                    self.metrics["bybit_funding_refreshes"] += 1
+                except Exception as exc:
+                    self.metrics["bybit_funding_errors"] += 1
+                    self.health["bybit"]["funding_last_error_code"] = getattr(exc, "code", type(exc).__name__)
             if "bingx" in self.http:
                 try:
                     data = await self.http["bingx"].get("/openApi/swap/v2/quote/premiumIndex")
@@ -284,8 +318,12 @@ class Scanner:
                             else 0
                         )
                         self.funding[("bingx", r["symbol"])] = Funding(
-                            D(str(r["lastFundingRate"])), int(r["nextFundingTime"]), interval
+                            D(str(r["lastFundingRate"])),
+                            int(r["nextFundingTime"]),
+                            interval,
+                            source="BINGX_PUBLIC_PREMIUM_INDEX_REST",
                         )
+                    self.metrics["bingx_funding_refreshes"] += 1
                 except Exception:
                     self.metrics["funding_errors"] += 1
             await asyncio.sleep(30)
@@ -341,30 +379,56 @@ class Scanner:
                     if len(times) >= 3 and times[0] - times[1] == times[1] - times[2] > 0:
                         self.funding_intervals_bingx[symbol] = times[0] - times[1]
                         self.funding_intervals_checked[symbol] = time.monotonic()
+                        previous = self.funding.get(("bingx", symbol))
+                        if previous:
+                            # Learning the schedule is not a new observation of the rate itself.
+                            from dataclasses import replace
+
+                            self.funding[("bingx", symbol)] = replace(
+                                previous, interval_ms=times[0] - times[1]
+                            )
                         self.metrics["funding_intervals_observed"] += 1
                 except Exception:
                     self.metrics["funding_interval_errors"] += 1
             await asyncio.sleep(60)
 
+    def select_depth(self, now_ms, now):
+        ranked = sorted(
+            (s for s in self.signals.values() if s.expires_at_ms > now_ms),
+            key=lambda s: (bool(s.identity_proof), s.raw_spread_pct),
+            reverse=True,
+        )[: self.cfg.shortlist]
+        desired = []
+        # Warm reviewed pairs even when no spread clears the economic entry filter.
+        for instruments in self.by_asset.values():
+            for a in instruments:
+                if any(compatible(a, b) for b in instruments):
+                    desired.append(a.key)
+        for s in ranked:
+            desired.extend(((s.cheap, s.long_symbol), (s.expensive, s.short_symbol)))
+        selected = {
+            key
+            for key in self.depth_tasks
+            if key in self.instruments and now - self.depth_selected_at.get(key, 0) < 30
+        }
+        for key in dict.fromkeys(desired):
+            if key not in self.instruments:
+                continue
+            if sum(k[0] == key[0] for k in selected) < self.cfg.shortlist:
+                selected.add(key)
+        return selected
+
     async def depth_loop(self):
         while not self.stop.is_set():
             now_ms = int(time.time() * 1000)
-            ranked = sorted(
-                (s for s in self.signals.values() if s.expires_at_ms > now_ms),
-                key=lambda s: s.raw_spread_pct,
-                reverse=True,
-            )[: self.cfg.shortlist]
-            wanted = set()
-            for s in ranked:
-                for x in self.instruments.values():
-                    if x.base == s.asset or x.asset_id == s.asset:
-                        if x.venue in (s.cheap, s.expensive):
-                            wanted.add(x.key)
+            wanted = self.select_depth(now_ms, time.monotonic())
             for key in set(self.depth_tasks) - wanted:
                 self.depth_tasks[key].cancel()
                 await asyncio.gather(self.depth_tasks.pop(key), return_exceptions=True)
                 self.books.pop(key, None)
+                self.depth_selected_at.pop(key, None)
             for venue, symbol in wanted - set(self.depth_tasks):
+                self.depth_selected_at[(venue, symbol)] = time.monotonic()
                 self.depth_tasks[(venue, symbol)] = asyncio.create_task(
                     stream(
                         self.session,
@@ -411,6 +475,19 @@ class Scanner:
                 "received_quotes": sum(k[0] == v for k in self.quotes),
                 "symbol_counterparts_unverified": counterpart,
                 "no_counterpart": len(instruments) - counterpart,
+                "quote_sources": dict(Counter(q.source for k, q in self.quotes.items() if k[0] == v)),
+                "funding_received": sum(x.key in self.funding for x in instruments),
+                "funding_usable": sum(
+                    x.key in self.funding and not funding_rejections(self.funding[x.key], now_ms, now)
+                    for x in instruments
+                ),
+                "funding_blockers": dict(
+                    Counter(
+                        code
+                        for x in instruments
+                        for code in funding_rejections(self.funding.get(x.key), now_ms, now)
+                    )
+                ),
                 "depth_books": sum(
                     k[0] == v and b.valid and fresh(b.source_ms, b.received, self.cfg, now_ms, now)
                     for k, b in self.books.items()
@@ -468,6 +545,9 @@ class Scanner:
                 "dropped": self.journal.dropped,
                 "failures": self.journal.failures,
                 "pending": self.journal.queue.qsize(),
+                "storage": self.journal.storage,
+                "healthy": bool(self.journal.pool) and self.journal.last_write_error is None,
+                "last_write_error": self.journal.last_write_error,
             },
             "readiness": "OBSERVATION_ONLY"
             if len(coverage) == 2 and all(coverage[v]["fresh_quotes"] for v in coverage)
@@ -513,6 +593,7 @@ class Scanner:
         ]
         self.tasks.append(asyncio.create_task(self.funding_interval_loop()))
         self.tasks.append(asyncio.create_task(self.clock_loop()))
+        self.tasks.append(asyncio.create_task(self.journal.monitor_storage(self.stop)))
         self.tasks += [asyncio.create_task(self.catalogs(v)) for v in self.cfg.venues]
 
     async def close(self):

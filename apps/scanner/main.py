@@ -12,6 +12,7 @@ from aiohttp import ClientSession, web
 
 from apps.scanner.service import Scanner
 from core.config import Config
+from core.evaluator import funding_rejections
 from core.reasons import REASONS
 
 
@@ -29,7 +30,7 @@ def api(scanner):
 
     async def ready(request):
         status = scanner.status()
-        ok = status["readiness"] == "OBSERVATION_ONLY" and status["journal"]["durable"]
+        ok = status["readiness"] == "OBSERVATION_ONLY" and status["journal"]["healthy"]
         return web.json_response({"ready": ok, "readiness": status["readiness"]}, status=200 if ok else 503)
 
     async def status(request):
@@ -52,6 +53,22 @@ def api(scanner):
         return web.json_response(
             json_safe([{"venue": v, "symbol": s, **asdict(q)} for (v, s), q in scanner.quotes.items()])
         )
+
+    async def funding(request):
+        now, now_ms = time.monotonic(), int(time.time() * 1000)
+        rows = []
+        for key in scanner.instruments:
+            item = scanner.funding.get(key)
+            rows.append(
+                {
+                    "venue": key[0],
+                    "symbol": key[1],
+                    "data": asdict(item) if item else None,
+                    "age_ms": (now - item.received) * 1000 if item else None,
+                    "rejection_codes": funding_rejections(item, now_ms, now),
+                }
+            )
+        return web.json_response(json_safe(rows))
 
     async def history(request):
         return web.json_response(await scanner.journal.history())
@@ -113,6 +130,7 @@ def api(scanner):
         ("/signals", signals),
         ("/markets", markets),
         ("/quotes", quotes),
+        ("/funding", funding),
         ("/history", history),
         ("/metrics", metrics),
         ("/reason-codes", reasons),

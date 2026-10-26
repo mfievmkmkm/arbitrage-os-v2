@@ -2,6 +2,28 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Обновление потоков и диагностики · 27.10.2026 · до нового деплоя
+
+Подготовлен новый runtime: broad Bybit `orderbook.1` snapshot вместо ticker-delta; `ts` подтверждает
+реальный полный снимок, `cts` хранится отдельно. Повторный snapshot с тем же u допустим; heartbeat
+не меняет quote. TTL остаётся 2 s, max skew 1000 ms: медленные/тихие рынки могут отсеиваться.
+Funding Bybit проверяется публичным REST tickers каждые ~30 s, без использования REST bid/ask
+вместо WS. Отказы funding разложены на missing/stale/interval/settlement/invalid; добавлен /funding.
+
+Depth shortlist удерживает подписки минимум 30 s, ограничен 12 на биржу, греет reviewed пары.
+Плановая смена depth не называется аварией провайдера. Метрики quotes/depth раздельны.
+Реестр содержит только два reviewed native underlying: BTC и ETH; прочие labels не повышаются
+по совпадению символа. Источники и реальные catalog rows: evidence/identity-native-2026-10-27.json.
+
+Локально 72 passed, 1 skipped (Postgres integration без TEST_DATABASE_URL), Ruff pass. Synthetic
+load отдельно от рынка: 40000 events / 1200 assets, ~13460 events/s, p95 3.57 ms. Это не реальные
+рыночные сигналы и не доказательство мощности ограниченного Railway контейнера.
+Добавлены pg_database_size/pg_total_relation_size/growth через private DB и operational readiness
+при ошибке записи; эти SQL ещё должны пройти real Postgres CI и cloud verification.
+
+Новая версия ещё не считается проверенной на рынке до успешного CI, deploy и нового evidence.
+Предыдущий runtime/реальное observation ниже сохраняются как историческое доказательство.
+
 ## Текущий Railway результат · 27.10.2026 · 01:41 Екатеринбург
 
 После явного разрешения владельца удалены два старых сервиса и их два диска; удаление с 2FA

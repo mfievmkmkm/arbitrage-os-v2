@@ -89,3 +89,20 @@
 34. После restart только scanner API /history вернул записи старше нового CONFIG:BOOT. Это
     доказательство сохранности истории процесса в Postgres, но не cloud DB restart test или ≥24h.
     Free кредит и 500 MB не гарантируют круглосуточный месяц или достаточную ёмкость истории.
+
+
+## Корректность рыночного потока · 27.10.2026
+
+35. Bybit broad bid/ask переведён на документированный snapshot-only orderbook.1. Повторные
+    snapshot с тем же u подтверждают состояние, ts и cts сохраняются раздельно. Ticker/mark/funding
+    и heartbeat не освежают котировки. Quote TTL и skew не расширяются для улучшения статистики.
+36. Funding Bybit периодически получает actual current public REST rate/next/interval вместо
+    зависимости от изменения ставки в ticker delta. BingX interval по истории не принимается
+    за новую ставку и не освежает её monotonic age. Неизвестный интервал остаётся отказом.
+37. Depth warm-up reviewed pairs и 30 s hold уменьшают churn; глубина bounded 12/venue. Planned
+    unsubscribe отзывает book и signal с ORDERBOOK_UNAVAILABLE, а не ложной provider outage.
+38. BTC/ETH: curated reviewed native-only bindings с источниками обеих бирж и catalog evidence.
+    Numeric prefixes/wrappers/другие единицы не принимаются. Реестр не заполняется массово
+    символьным сравнением; DEX token-address proof этим не заменяется.
+39. DB monitor показывает фактический размер database/table и рост, но не выдаёт это за свободное
+    место всего volume (WAL/other files не включены). История автоматически не удаляется.

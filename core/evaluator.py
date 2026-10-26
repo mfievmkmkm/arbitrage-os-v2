@@ -27,6 +27,21 @@ def fresh(source_ms, received, cfg, now_ms, now):
     return 0 <= now_ms - source_ms <= cfg.quote_ttl * 1000 and 0 <= now - received <= cfg.quote_ttl
 
 
+def funding_rejections(funding, now_ms, now):
+    if funding is None:
+        return [Reason.FUNDING_MISSING]
+    codes = []
+    if not 0 <= now - funding.received <= 120:
+        codes.append(Reason.FUNDING_STALE)
+    if funding.interval_ms <= 0:
+        codes.append(Reason.FUNDING_INTERVAL)
+    if funding.next_ms <= now_ms:
+        codes.append(Reason.FUNDING_TIME)
+    if not funding.rate.is_finite():
+        codes.append(Reason.FUNDING_INVALID)
+    return codes
+
+
 def evaluate(a, b, qa, qb, ba, bb, fa, fb, cfg, now_ms=None, now=None):
     now_ms = now_ms if now_ms is not None else int(time.time() * 1000)
     now = now if now is not None else time.monotonic()
@@ -93,16 +108,9 @@ def evaluate(a, b, qa, qb, ba, bb, fa, fb, cfg, now_ms=None, now=None):
     if a.taker_fee is None or b.taker_fee is None:
         reasons.append(Reason.FEES)
     horizon_ms = now_ms + cfg.hold_seconds * 1000
-    for f in (fa, fb):
-        if (
-            f is None
-            or now - f.received > 120
-            or f.interval_ms <= 0
-            or f.next_ms <= now_ms
-            or not f.rate.is_finite()
-        ):
-            reasons.append(Reason.FUNDING)
-            break
+    funding_codes = list(dict.fromkeys(c for f in (fa, fb) for c in funding_rejections(f, now_ms, now)))
+    if funding_codes:
+        reasons.extend([Reason.FUNDING, *funding_codes])
     s.identity_proof = [x for x in (a.identity_proof, b.identity_proof) if x]
     s.confidence_flags = [
         f"FEES_{a.fee_source}",
