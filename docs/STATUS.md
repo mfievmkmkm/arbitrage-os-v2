@@ -1,119 +1,149 @@
-# ARBITRAGE OS v2 · статус на 26.10.2026
+# ARBITRAGE OS v2 · 27.10.2026 · требования 1.3
 
-**Версия 0.1.0 · OBSERVE · LIVE OFF · Stage 0/1A: код реализован, приёмка НЕ завершена.**
+**Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
-GitHub: NOT_PUBLISHED — инструмент подключённого GitHub не предоставляет создание репозитория.
-Deploy ID: NOT_DEPLOYED. Круглосуточный сервис не запускался; временные observation-процессы остановлены.
-Локальная история поставляется в git bundle. Старый arbitrage-engine не изменялся.
+## GitHub и сохранность истории
 
-## Реально реализовано
+Repository: https://github.com/mfievmkmkm/arbitrage-os-v2 — создан владельцем, PUBLIC, при проверке пустой.
+GitHub connector показывает push/admin permissions. Прямой `git push -u origin main` из командной
+среды завершился `could not read Username for 'https://github.com': terminal prompts disabled`.
 
-- Native public Bybit/BingX adapters; полный каталог, Bybit pagination/cursor loop guard,
-  фильтрация типа/settlement/status/launch/maintenance; регулярный refresh.
-- Только 2 разрешённых venue, OBSERVE-only config; подписки WS всех активных контрактов,
-  шардирование, GZIP и Ping/Pong, heartbeat, jitter/backoff, независимые соединения.
-- Индексы base для неподтверждённых RAW и asset_id для подтверждённых underlying;
-  два направления; quote TTL/skew; доказательный identity gate без ticker-only VERIFIED.
-- Native 50-level shortlist, Bybit snapshot/delta, BingX limited snapshots;
-  отдельный parser BingX incremental с fail-closed на gap.
-- Общий симметричный quantity grid, min qty/notional, notional cap, VWAP четырёх сторон,
-  четыре комиссии, текущий round-trip, гипотеза NET при target basis, funding signs/settlements.
-- История состояний, пика спреда, отказов и истечения; bounded queue/batch Postgres journal;
-  явный nondurable режим диагностики без БД, сохранение/восстановление числовых настроек.
-- HTTP API, health/readiness, Prometheus metrics, CPU/RSS, различение event-processing и
-  detection latency; независимый owner-only русский Telegram, кнопки/Назад/ручные числа.
-- Docker/compose, Postgres migration, Linux/Windows CI definition, unit/replay, HTTP/WS integration,
-  backpressure, outage isolation, disconnect invalidation, cold funding metadata test, synthetic load.
+**Публикация не выполнена.** Доступный connector create_commit не позволяет указать исходные
+commit metadata и сохранить их SHA; пересоздавать историю ради публикации запрещено владельцем.
+Коммиты `dc7a92e1fb23a9007b35b30c9bdd5e1b24f881b5` и
+`f8db3be24a9b4ee2050ea8c8573404e2c3159ff8` не изменены и остаются предками новых коммитов.
+Force push, amend, rebase, orphan не выполнялись. Новый репозиторий/проект не создавался.
 
-## Фактическое наблюдение
+Архив содержит полный git bundle и исходники. Точные Windows CMD команды — README и
+`scripts/publish_windows.cmd`. GitHub Actions остаются NOT_RUN до успешного обычного push.
 
-Последнее окно **180 s**, закончено 26.10.2026; источник результатов —
-[evidence/observation-final.json](evidence/observation-final.json), включая полный список instrument IDs,
-constraints, bid/ask и timestamps. Ранее было отдельное окно 90 s.
+## Проверка секретов
 
-| Показатель | Bybit | BingX |
+Проверены reachable Git history и индекс новой версии: `.env`/private key files не отслеживаются,
+токены/API-ключи/приватные ключи по проверенным шаблонам не найдены. Единственные credential-like
+строки старого кода — `${POSTGRES_PASSWORD}` и известный непроизводственный CI fixture `ci-only`.
+Они рассмотрены явно; blanket исключений для папок нет. Сканер проверяет high-confidence patterns
+и sensitive filenames, не заявляет математической гарантии обнаружить любую строку-секрет.
+Результаты: `evidence/v1_3/secret-index.json`, `secret-history.json`.
+
+## Почему не работает Bybit — доказательства и предел вывода
+
+Полный протокол: `evidence/v1_3/network-diagnostics.json`.
+
+- Документированные `https://api.bybit.com/v5/market/time` и `/v5/market/instruments-info`
+  возвращают HTTP 200, content-type=text/html, 195 bytes вместо биржевого JSON.
+- Контрольный несуществующий `/v5/not-a-real-endpoint` возвращает ту же страницу с тем же SHA256:
+  `5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7`.
+- `wss://stream.bybit.com/v5/public/linear` вместо WS upgrade 101 получает HTTP 200.
+- TLS issuer наблюдаемого соединения к api.bybit.com: **OpenAI, LLC / openai.com**.
+  Следовательно, TLS перехватывается управляемым шлюзом этой среды.
+- Независимые urllib и aiohttp воспроизводят ошибку без кода сканера. Endpoint соответствует
+  официальным V5 Integration Guidance/Instrument docs.
+
+**Установлено:** это не ошибка JSON parser сканера и не неправильный путь V5; в перехваченном
+сетевом пути приходит общая не-API страница. **Не установлено:** генерирует её сам шлюз или его
+upstream и является ли upstream причина региональным запретом. Без origin/gateway logs утверждать
+точную первопричину нельзя. Не выдаём сам факт OpenAI TLS interception за доказательство,
+что HTML обязательно сгенерирован именно этим шлюзом.
+
+Официальные docs указывают для части ограниченных IP 403; здесь наблюдается 200 HTML,
+поэтому произвольное утверждение «регион запрещён» не делается.
+Источники: https://bybit-exchange.github.io/docs/v5/guide,
+https://bybit-exchange.github.io/docs/v5/market/instrument.
+
+**Ошибка не устранена изменением сетевой политики:** таких прав/логов нет. Добавлены конкретный
+`PUBLIC_API_HTML_UNAVAILABLE`, безопасные HTTP metadata и hash. Альтернативные домены, proxy rotation,
+обход ограничений, подмена каталога или третья CEX не использовались.
+
+## Новые изменения кода
+
+- При disconnect/backpressure/пустой котировке старый VERIFIED отзывается немедленно,
+  API перестаёт его отдавать, причина сохраняется в истории. Отложенные до disconnect события
+  не оживляют старый поток. Очередь корректно освобождает unfinished counters на early exits.
+- Сигнал не живёт дольше quotes/books TTL. Отдельные проверки empty/crossed/invalid/duplicate levels,
+  quote skew, book skew, неверного времени, out-of-order пакетов.
+- Bybit delta только реального top-of-book обновляет quote; mark/funding/heartbeat не освежают её.
+  Unchanged fields восстанавливаются из непрерывного потока. Regression timestamps отклоняется
+  до изменения cache. Глубина использует matching-engine `cts`, сохраняет `u` и cross `seq`.
+- Отдельные проверки на **$50/$100/$250** плюс выбранный основной размер. Лимит проскальзывания
+  `MAX_SLIPPAGE_BPS`, общий quantity grid, max symmetric qty и размер с VWAP в пределах лимита.
+  Параметр — только аналитический, ордеров нет.
+- Диагностика clock offset/RTT/uncertainty; ожидание shared REST limiter не выдаётся за network RTT.
+  Source timestamps скрытно не исправляются. Сомнительный offset не считается точной синхронизацией.
+- Метрики compatible pairs, directed routes, outbound public paths. Только Bybit/BingX endpoints.
+- Журнал дополнен boot configuration и provider health; nondurable memory не выдаётся за Postgres:
+  отдельный persisted=0 без DB. Причины отказов по-русски в API/Telegram.
+- Единое MASTER_SPEC v1.3, requirements_v1_3.md, CLOUD_RUNBOOK. Полный Stage 1 обязательно содержит
+  1B: Spot Bybit/BingX + DEX BNB Chain/Base/Arbitrum (factory discovery, pool updates, identity,
+  size-aware buy/sell execution quotes, gas, token restrictions). DEX не исключён и не начат раньше Gate 1A.
+
+## Реальное наблюдение — отдельно от тестов
+
+`evidence/v1_3/observation-120s.json` — 120 секунд промежуточной версии:
+BingX 1294 discovered, 1227 active/fresh, 316371 quote events, p95 обработки 0.2719 ms.
+
+`evidence/v1_3/observation-final.json` — повторный 60-секундный smoke финальной версии:
+
+| Метрика | Bybit | BingX |
 |---|---:|---:|
-| Обнаружено записей | неизвестно: API недоступен | 1294 |
-| Активно после фильтров | неизвестно | 1234 |
-| Исключено status/launch/maintenance/типом | неизвестно | 60 |
-| Свежие WS quotes на конце окна | 0 | 1234 / 1234 |
-| WS соединения на конце окна | 0 | 31 |
-| Подтверждённые identity bindings | 0 | 0 |
-| Статус | UNAVAILABLE / NON_JSON_RESPONSE | PUBLIC_READY |
+| Обнаружено записей каталога | НЕ ПОЛУЧЕНО | 1294 |
+| Активные контракты после фильтров | НЕИЗВЕСТНО | 1226 |
+| Исключено status/type/maintenance/launch | НЕИЗВЕСТНО | 68 |
+| Свежие котировки в конце | 0 | 1226 / 1226 |
+| Соединения broad WS | 0 | 31 |
+| Возраст quotes p95 | не измерен | 715 ms |
+| Состояние | UNAVAILABLE | PUBLIC_READY |
 
-Bybit вернул HTTP 200 с HTML «Site Unavailable» вместо JSON. Это не пустой каталог
-и не доказательство отсутствия рынков. Причина ограничения доступа этим ответом не установлена;
-ограничения не обходились, другая биржа не использовалась.
+Quote events **139212**, Ping/Pong **297**, event-processing p50 **0.0564 ms**, p95 **0.2345 ms**,
+окно последних 20000 событий. Queue depth=0, зафиксированных dropped events нет.
+RSS **52473856 bytes ≈50.04 MiB**, CPU process **14.84 s / 60 s**.
+Clock midpoint BingX **+2.09 ms ±105.80 ms**, RTT **211.60 ms**; общий вызов с ожиданием limiter
+около 5.15 s показан отдельно. Это не точность matching engine и не гарантированный upstream age.
 
-BingX: **507451 quote events**, 1044 Ping/Pong, queue_depth=0 на конце окна,
-зафиксированных dropped events/reconnects в успешном broad feed нет.
-Шесть ошибок каталога относятся к независимым попыткам получить недоступный Bybit.
+**Межбиржевой p50/p95: НЕ ИЗМЕРЕН.** Каталог Bybit отсутствует, реальные совместимые пары
+определить нельзя. `compatible_pairs=0` означает 0 подтверждённых пар в текущем состоянии,
+не утверждение, что общих контрактов у бирж нет. Реестр identity по-прежнему пуст:
+не заполнялся догадками по одним тикерам при отсутствии второго реального каталога.
 
-- p50 внутренней обработки события: **0.0558 ms**; p95 **0.2559 ms**.
-- Это окно последних 20000 событий и метрика WS receive → обработанное событие.
-- **Реальный time-to-detect/p95 межбиржевого кандидата: НЕ ИЗМЕРЕН**, 0 сравнений.
-- Индикатор возраста BingX quotes p95: **659 ms** по source timestamps/локальным часам;
-  не гарантирует отсутствие upstream задержки и clock offset.
-- RSS на конце: **52486144 bytes ≈ 50.05 MiB**.
-- CPU process time: **55.52 s / 180 s** наблюдения; это не CPU p95 и не 24-часовой профиль.
+RAW/VERIFIED/EXECUTABLE **0/0/0**, PAPER входы/выходы **0/0**, DEX pools=0.
+Причина нуля — отсутствие Bybit и отсутствие подтверждённых маршрутов, а не доказанное
+отсутствие прибыльных ситуаций на рынке. В финальном окне журнал содержит 2 отзыва провайдера
+PUBLIC_API_HTML_UNAVAILABLE и boot config. Без Postgres **persisted=0** — durability не доказана.
 
-Реальные RAW/VERIFIED/EXECUTABLE: **0 / 0 / 0**. PAPER входы/выходы **0/0**.
-Не было межбиржевых маршрутов, поэтому нет фиктивного NET или экономических отказов.
-1234 BingX инструментам в этом прогоне не найден контрагент: каталог Bybit недоступен.
+Количество активных BingX менялось между окнами: это реальные снимки, не фиксированное покрытие.
+Все instrument IDs, bid/ask и source timestamps находятся в JSON evidence.
 
-Счётчик активных BingX изменился с 1233 в первом окне до 1234 во втором; это независимые
-реальные снимки каталога, не фиксированное обещание количества контрактов.
+## Проверки и облачная подготовка
 
-## Стакан и нагрузка — отдельные доказательства
+`evidence/v1_3/tests.txt`: **62 passed, 1 skipped**, Linux Python 3.12, покрытие **72%**,
+route evaluator **97%**. Ruff и git diff --check — pass. Тестируется реальный local HTTP/WS server,
+GZIP/Ping, disconnect → invalidate → reconnect → повторный subscribe → новый quote,
+разные размеры, TTL, crossing/empty/несинхронность и timestamp regressions.
+Это тестовый сервер/replay, а не работа Bybit.
 
-[evidence/depth-probe.json](evidence/depth-probe.json): пять реальных 50-level снимков
-BingX BTC-USDT, без ордеров. Это однобиржевая проверка протокола, не арбитражная возможность.
-Первый probe incrDepth был отклонён внутренним лимитом BOOK_TOO_LARGE; активный адаптер
-переведён на ограниченную documented depth50 snapshot тему. См. DECISIONS.md.
+| Проверка | Фактический статус |
+|---|---|
+| Linux tests/lint | PASS локально |
+| Windows tests / GitHub Actions | NOT_RUN: публикация блокирована git authentication |
+| Реальный PostgreSQL restart test | SKIPPED: TEST_DATABASE_URL отсутствует |
+| Docker build / compose | NOT_RUN: Docker отсутствует |
+| Установка локального Postgres | Не выполнена: apt завершился ошибками setgroups/setegid/seteuid sandbox |
+| Postgres migration / DB restart smoke CI | Реализованы jobs/scripts, ещё NOT_RUN |
+| Real Telegram | NOT_CONNECTED: token/owner ID не заданы |
+| Cloud deployment | NOT_DEPLOYED, платные сервисы не создавались |
+| Наблюдение ≥24 h на двух биржах | НЕ ВЫПОЛНЕНО |
 
-[evidence/load.json](evidence/load.json): **SYNTHETIC_LOAD_NOT_REAL_MARKET**,
-1200 общих искусственных активов, 40000 событий и оба направления. Скорость и p95
-даны в JSON для последней версии. Синтетические цены/asset IDs не используются в production.
-Это не гарантированная производительность внешнего провайдера и не реальные сделки.
+CI теперь содержит Linux/Windows, secrets history scan, реальный Postgres service и отдельный
+Docker/compose job с проверкой сохранённого INTEGRATION_TEST event после перезапуска контейнеров.
+Manual read-only workflow сохраняет independent network diagnostics и market observation artifact.
+Ephemeral CI credentials генерируются и маскируются; не являются торговыми ключами.
 
-## Проверки
+## Следующий конкретный шаг
 
-[evidence/tests.txt](evidence/tests.txt): **47 passed, 1 skipped**, Python 3.12/Linux.
-Общее покрытие проверенного кода **70%**, evaluator **97%**, identity **100%**.
-Ruff: pass. Пропущен только настоящий Postgres restart integration: TEST_DATABASE_URL не задан.
-Локальный настоящий HTTP/WS сервер проверяет GZIP/Ping, native subscribe, глубину,
-HTTP 200 HTML, 429, API TTL/auth, отказ провайдера, инвалидирование очереди при disconnect.
+Опубликовать поставленный bundle обычным Windows Git push (команды в README), сохранив исходные
+SHA. Затем проверить запустившийся CI и независимый public observation workflow. Для принятия
+Gate 1A нужны разрешённая среда с реально доступными Bybit REST+WS, заполнение evidence identity
+registry, durable Postgres, оба реальных потока и ≥24 h статистики. После 1A — обязательный 1B.
+До этих проверок нет оснований объявлять сканер готовым или переходить к торговле.
 
-**GitHub CI Linux/Windows: NOT_RUN** — workflow подготовлен, но репозиторий ещё не создан.
-Docker build/compose и реальный PostgreSQL здесь **NOT_RUN**: Docker/сервер Postgres отсутствуют.
-Telegram render проверен тестом; реальный бот **NOT_CONNECTED**: токен/owner ID не заданы.
-У окна observation `journal.durable=false`: это не доказательство долговечной истории.
-
-## Что ещё блокирует приёмку 0/1A
-
-1. Новый пустой private GitHub repo `arbitrage-os-v2`, публикация локальных commits, зелёные Linux/Windows CI.
-2. Официальный public Bybit API в разрешённом рабочем окружении и проверка обоих реальных потоков.
-3. Доказательный cross-venue identity registry. Сейчас он **пуст**: никакие 1234 ticker-only совпадения
-   не будут автоматически объявлены проверенными. Нужна проверка underlying/specification на двух каталогах.
-4. Реальный Postgres, restart/persistence integration и compose smoke; реальный Telegram владельца.
-5. Настоящие межбиржевые RAW/VERIFIED snapshots, реальные rejection funnel и measured time-to-detect.
-6. Расширенная проверка reconnect/resubscribe и листинга/делистинга на двух реальных venues,
-   подтверждение subscription budgets. Длительное окно ≥24 h и resource/profile отчёт ещё не выполнены.
-7. Числовые настройки уже меняются через UI; динамическое включение/выключение venues без перезапуска,
-   более полная пагинация UI/сортировки и автоматическая верификация identity — следующие доработки.
-
-**Следующая конкретная задача:** опубликовать новый repo, запустить этот OBSERVE-код с PostgreSQL
-в окружении с доступом к обеим официальным API, завершить identity registry и собрать двухбиржевое
-наблюдение. До этого не начинать Stage 1B, PAPER AUTO, DEX/transfer/LIVE.
-
-## Действие владельца и секреты
-
-Создать https://github.com/new → Repository name `arbitrage-os-v2`, Private,
-не добавлять README/.gitignore/license. Передать только ссылку репозитория.
-Эта ручная операция нужна из-за отсутствия API создания repo, а не из-за торгового разрешения.
-
-Для будущего запуска владелец задаёт в защищённом окружении DATABASE_URL (либо
-POSTGRES_PASSWORD для compose), CONTROL_TOKEN, необязательно TELEGRAM_BOT_TOKEN и
-TELEGRAM_OWNER_ID. В чат и GitHub секреты не передавать. Биржевые ключи не нужны.
-
-Режим LIVE: **OFF**. Нет кода отправки торговых ордеров.
+Биржевые API-ключи, seed, подпись кошелька и live orders **не используются**. LIVE: **OFF**.

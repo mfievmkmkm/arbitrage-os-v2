@@ -1,0 +1,63 @@
+{
+  "observed_at_ms": 1793041841322,
+  "requests": [
+    {
+      "url": "https://api.bybit.com/v5/market/time",
+      "status": 200,
+      "content_type": "text/html",
+      "server": "envoy",
+      "sample_bytes": 195,
+      "sample_sha256": "5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7",
+      "preview": "<html>\n    <head><title>Site Unavailable</title></head>\n    <body>\n      <center>\n        <h1>Site Unavailable</h1>\n        <p>Unable to access this site.</p>\n      </center>\n    </body>\n</html>\n"
+    },
+    {
+      "url": "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+      "status": 200,
+      "content_type": "text/html",
+      "server": "envoy",
+      "sample_bytes": 195,
+      "sample_sha256": "5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7",
+      "preview": "<html>\n    <head><title>Site Unavailable</title></head>\n    <body>\n      <center>\n        <h1>Site Unavailable</h1>\n        <p>Unable to access this site.</p>\n      </center>\n    </body>\n</html>\n"
+    },
+    {
+      "url": "https://api.bybit.com/v5/not-a-real-endpoint",
+      "status": 200,
+      "content_type": "text/html",
+      "server": "envoy",
+      "sample_bytes": 195,
+      "sample_sha256": "5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7",
+      "preview": "<html>\n    <head><title>Site Unavailable</title></head>\n    <body>\n      <center>\n        <h1>Site Unavailable</h1>\n        <p>Unable to access this site.</p>\n      </center>\n    </body>\n</html>\n"
+    },
+    {
+      "url": "https://open-api.bingx.com/openApi/swap/v2/server/time",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server": "envoy",
+      "sample_bytes": 55,
+      "sample_sha256": "a2a983bd76069209e6140fb0a139df83b745afcb3787324f64bc832e306c6529",
+      "preview": "{\"code\":0,\"msg\":\"\",\"data\":{\"serverTime\":1793041836522}}"
+    },
+    {
+      "bybit_ws_error": "WSServerHandshakeError",
+      "status": 200
+    }
+  ],
+  "bybit_tls_issuer": [
+    {
+      "countryName": "US"
+    },
+    {
+      "stateOrProvinceName": "California"
+    },
+    {
+      "localityName": "San Francisco"
+    },
+    {
+      "organizationName": "OpenAI, LLC"
+    },
+    {
+      "commonName": "openai.com"
+    }
+  ],
+  "limitations": "Interception is observable; original origin-side cause needs gateway/origin logs"
+}

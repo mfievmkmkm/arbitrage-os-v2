@@ -1,0 +1,37 @@
+name: Public market observation (read-only)
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Observation window (60 to 900 seconds)
+        default: '180'
+        required: true
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Validate observation duration
+        env:
+          OBSERVE_SECONDS: ${{ inputs.seconds }}
+        run: python -c "import os; n=int(os.environ['OBSERVE_SECONDS']); assert 60<=n<=900"
+      - name: Independent public network diagnostics
+        run: python scripts/diagnose_public.py
+      - name: OBSERVE with real feeds only
+        env:
+          OBSERVE_SECONDS: ${{ inputs.seconds }}
+          MODE: OBSERVE
+          ENABLED_CEX_VENUES: bybit,bingx
+        run: python -m apps.scanner.main --seconds "$OBSERVE_SECONDS" --report reports/github-observation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-observation-evidence
+          path: reports/

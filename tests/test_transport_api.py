@@ -229,3 +229,56 @@ async def test_funding_interval_cold_start_uses_evidence(monkeypatch):
     monkeypatch.setattr("apps.scanner.service.asyncio.sleep", end_iteration)
     await scanner.funding_interval_loop()
     assert scanner.funding_intervals_bingx["BTC-USDT"] == 10000
+
+
+@pytest.mark.asyncio
+async def test_websocket_disconnect_resubscribes_and_resets(monkeypatch):
+    calls = []
+
+    async def handler(request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        calls.append(await ws.receive_json())
+        await ws.send_bytes(
+            gzip.compress(
+                json.dumps(
+                    {
+                        "code": 0,
+                        "dataType": "BTC-USDT@bookTicker",
+                        "data": {
+                            "s": "BTC-USDT",
+                            "b": "100",
+                            "a": "101",
+                            "B": "1",
+                            "A": "2",
+                            "T": int(time.time() * 1000),
+                        },
+                    }
+                ).encode()
+            )
+        )
+        if len(calls) == 1:
+            await ws.close()
+        else:
+            await ws.receive()
+        return ws
+
+    app = web.Application()
+    app.router.add_get("/ws", handler)
+    async with TestServer(app) as server, ClientSession() as session:
+        monkeypatch.setitem(public.WS, "bingx", str(server.make_url("/ws")).replace("http:", "ws:"))
+        monkeypatch.setattr(public.random, "random", lambda: 0)
+        stop, events, metrics = asyncio.Event(), [], Counter()
+
+        async def emit(v, s, q, f, book, received, **kw):
+            if q:
+                events.append("quote")
+                if events.count("quote") == 2:
+                    stop.set()
+            if kw.get("invalidate"):
+                events.append("invalidated")
+
+        await asyncio.wait_for(public.stream(session, "bingx", ["BTC-USDT"], emit, {}, metrics, stop), 5)
+        assert len(calls) == 2 and calls[0]["dataType"] == calls[1]["dataType"]
+        assert events[:3] == ["quote", "invalidated", "quote"]
+        assert metrics["ws_reconnects"] >= 1

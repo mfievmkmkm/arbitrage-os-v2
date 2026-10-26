@@ -14,3 +14,34 @@
 12. Telegram — отдельный процесс, owner-only, редактирование карточки и кнопка «Назад»; сканер работает без токена. Настройки конечных чисел проходят проверку и сохраняются в Postgres с восстановлением при старте.
 13. Нет автоматического признания этапа 1A принятым: короткий прогон одной биржи, synthetic load и unit-тесты не заменяют двухбиржевую проверку и длительную работу.
 14. GitHub account доступен, но операция создания repository отсутствует в доступном connector. Подготовлены локальные commits и переносимый git bundle; новый пустой private repository должен создать владелец. Существующие repositories не изменялись.
+
+## Продолжение · 27.10.2026 · требования 1.3
+
+15. Пользователь создал `mfievmkmkm/arbitrage-os-v2`. GitHub metadata: repository пустой,
+    visibility PUBLIC, connector permissions push/admin=true. Visibility не менялась.
+    Прямой push исходной истории получил `could not read Username ... terminal prompts disabled`.
+    Connector create_commit не принимает исходные author/committer/timestamps, поэтому не использован
+    для пересоздания коммитов с другими SHA. Поставляется git bundle + команды CMD; force push запрещён.
+16. В рабочем MASTER_SPEC теперь единая v1.3. Предыдущая v1.1 остаётся в Git истории.
+    Полный этап 1 = 1A + 1B (DEX BNB/Base/Arbitrum и Spot Bybit/BingX). Исполнение A/B позже.
+17. Повторная диагностика Bybit: и правильные REST пути, и заведомо неверный путь дают одинаковые
+    HTTP 200 text/html 195 bytes, SHA256 5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7.
+    WS вместо 101 получает 200. TLS issuer — OpenAI, LLC / openai.com: перехват в сетевом пути доказан.
+    Не установлено, генерирует ли заглушку сам шлюз или его upstream; утверждать точную региональную
+    блокировку Bybit без origin/gateway logs нельзя. Endpoint верный по официальным V5 docs.
+18. `PUBLIC_API_HTML_UNAVAILABLE` сохраняет безопасные HTTP metadata и hash без credentials.
+    Нет альтернативных доменов, proxy rotation, третьих CEX или синтетического каталога Bybit.
+19. Отзыв сигналов при disconnect/backpressure/invalid quote немедленный, включая API и журнал.
+    TTL сигнала не продлевает TTL источника. Empty/crossed/invalid levels/skew дают отдельные причины.
+20. Bybit ticker delta восстанавливает неизменившиеся fields в пределах непрерывного соединения;
+    только реальный top-of-book delta освежает quote, funding/mark/heartbeat — нет. Порядок timestamps
+    проверяется до изменения cache. Book использует cts при наличии и сохраняет u + cross seq.
+21. Минимум три независимые проверки размера: default $50/$100/$250, плюс выбранный основной размер.
+    Лимит проскальзывания по каждой стороне, общий qty grid и максимальный объём в пределах лимита;
+    параметры наблюдения не являются торговым разрешением.
+22. Postgres история включает также конфигурацию boot и отказы провайдера. Память отдельно от durable
+    storage; без БД persisted=0. Clock offset — diagnostic midpoint с RTT uncertainty, без скрытой
+    коррекции source timestamps. Ожидание общего REST limiter исключено из сетевого RTT.
+23. Подготовлены отдельные GitHub jobs для настоящего Docker/compose/Postgres restart smoke и manual
+    public observation. До push это NOT_RUN. Локально Docker/Postgres отсутствуют; apt не смог понизить
+    UID/GID в sandbox, установка прекращена. Никакие права/региональные ограничения не обходились.

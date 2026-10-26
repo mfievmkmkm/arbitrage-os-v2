@@ -6,9 +6,9 @@ from dataclasses import asdict
 
 from adapters.cex.public import PublicHTTP, catalog, stream
 from core.config import Config
-from core.evaluator import evaluate, fresh
-from core.identity import identify, load_registry
-from core.models import D, Funding
+from core.evaluator import evaluate_sizes, fresh
+from core.identity import compatible, identify, load_registry
+from core.models import D, Funding, Reason
 from infrastructure.journal import Journal
 
 
@@ -63,11 +63,26 @@ class Scanner:
         self.last_journal = {}
         self.started = time.time()
 
+    def revoke(self, venue, symbols, reason):
+        symbols = set(symbols)
+        now_ms = int(time.time() * 1000)
+        for s in self.signals.values():
+            if (s.cheap == venue and s.long_symbol in symbols) or (
+                s.expensive == venue and s.short_symbol in symbols
+            ):
+                s.stage = "BLOCKED"
+                s.expires_at_ms = min(s.expires_at_ms, now_ms)
+                if reason not in s.rejection_codes:
+                    s.rejection_codes.append(reason)
+                    self.rejections[reason] += 1
+                    self.journal.append(asdict(s))
+
     async def emit(self, venue, symbol, quote, funding, book, received, invalidate=None, depth=False):
         if invalidate:
             for s in invalidate:
                 (self.books if depth else self.quotes).pop((venue, s), None)
                 self.invalid_before[(venue, s, depth)] = received
+            self.revoke(venue, invalidate, Reason.OUTAGE)
             return
         try:
             self.queue.put_nowait((venue, symbol, quote, funding, book, received))
@@ -75,6 +90,10 @@ class Scanner:
             self.metrics["dropped_events"] += 1
             # A dropped delta must not leave a supposedly current book in circulation.
             self.books.pop((venue, symbol), None)
+            self.quotes.pop((venue, symbol), None)
+            self.invalid_before[(venue, symbol, False)] = received
+            self.invalid_before[(venue, symbol, True)] = received
+            self.revoke(venue, [symbol], Reason.OUTAGE)
 
     async def consume(self):
         while not self.stop.is_set():
@@ -85,15 +104,27 @@ class Scanner:
             key = venue, symbol
             instrument = self.instruments.get(key)
             if not instrument:
+                self.queue.task_done()
                 continue
             if received <= self.invalid_before.get((venue, symbol, book is not None), 0):
                 self.metrics["discarded_pre_disconnect_events"] += 1
+                self.queue.task_done()
+                continue
+            if q and not q.valid():
+                self.metrics["invalid_quotes"] += 1
+                self.quotes.pop(key, None)
+                self.revoke(venue, [symbol], Reason.STALE)
+                self.queue.task_done()
                 continue
             if q and q.valid():
                 old = self.quotes.get(key)
                 if old is None or q.source_ms >= old.source_ms:
                     self.quotes[key] = q
                     self.metrics["quote_events"] += 1
+                else:
+                    self.metrics["out_of_order_quotes"] += 1
+                    self.queue.task_done()
+                    continue
             if f:
                 self.funding[key] = f
             if book:
@@ -120,8 +151,9 @@ class Scanner:
                             old_signal = self.signals.pop(sid)
                             old_signal.stage = "EXPIRED"
                             self.journal.append(asdict(old_signal))
+                            self.last_journal.pop(sid, None)
                         continue
-                    s = evaluate(
+                    s = evaluate_sizes(
                         a,
                         b,
                         qa,
@@ -211,7 +243,22 @@ class Scanner:
             raise
         except Exception as exc:
             h.update(status="UNAVAILABLE", last_error=type(exc).__name__ + ":" + str(exc)[:150])
+            h["last_error_code"] = getattr(exc, "code", type(exc).__name__)
+            h["last_error_evidence"] = getattr(exc, "evidence", {})
             self.metrics["catalog_errors"] += 1
+            self.rejections[h["last_error_code"]] += 1
+            self.journal.append(
+                {
+                    "id": f"INFRA:{venue}:catalog",
+                    "asset": venue,
+                    "stage": "BLOCKED",
+                    "event_type": "PROVIDER_HEALTH",
+                    "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+                    "observed_at_ms": int(time.time() * 1000),
+                    "rejection_codes": [h["last_error_code"]],
+                    "evidence": h["last_error_evidence"],
+                }
+            )
 
     async def catalogs(self, venue):
         while not self.stop.is_set():
@@ -242,6 +289,40 @@ class Scanner:
                 except Exception:
                     self.metrics["funding_errors"] += 1
             await asyncio.sleep(30)
+
+    async def clock_loop(self):
+        async def sample(venue):
+            before = time.time() * 1000
+            started = time.monotonic()
+            try:
+                path = "/v5/market/time" if venue == "bybit" else "/openApi/swap/v2/server/time"
+                data = await self.http[venue].get(path)
+                timing = self.http[venue].request_timings.get(path)
+                if timing:
+                    before = timing["sent_ms"]
+                server_ms = int(data["time"]) if venue == "bybit" else int(data["data"]["serverTime"])
+                after = time.time() * 1000
+                if timing:
+                    after = timing["received_ms"]
+                self.health[venue]["clock"] = {
+                    "offset_ms": server_ms - (before + after) / 2,
+                    "rtt_ms": after - before,
+                    "request_including_rate_limit_ms": (time.monotonic() - started) * 1000,
+                    "uncertainty_ms": (after - before) / 2,
+                    "usable_for_freshness": (after - before) <= 500,
+                    "sampled_at_ms": int(after),
+                    "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE",
+                }
+            except Exception as exc:
+                self.health[venue]["clock"] = {
+                    "offset_ms": None,
+                    "error_code": getattr(exc, "code", type(exc).__name__),
+                }
+                self.metrics["clock_errors"] += 1
+
+        while not self.stop.is_set():
+            await asyncio.gather(*(sample(v) for v in self.cfg.venues))
+            await asyncio.sleep(60)
 
     async def funding_interval_loop(self):
         while not self.stop.is_set():
@@ -336,7 +417,21 @@ class Scanner:
                 ),
             }
         current = [s for s in self.signals.values() if s.expires_at_ms > now_ms]
+        pair_keys = set()
+        for a in self.instruments.values():
+            if not a.asset_id:
+                continue
+            for b in self.by_asset[a.asset_id]:
+                if compatible(a, b):
+                    pair_keys.add(tuple(sorted((a.key, b.key))))
         return {
+            "requirements_version": "1.3",
+            "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+            "compatible_pairs": len(pair_keys),
+            "compatible_directed_routes": len(pair_keys) * 2,
+            "outbound_public_requests": {
+                v: dict(h.request_paths) for v, h in self.http.items() if hasattr(h, "request_paths")
+            },
             "mode": "OBSERVE",
             "live_enabled": False,
             "active_venues": list(self.cfg.venues),
@@ -369,6 +464,7 @@ class Scanner:
             "journal": {
                 "durable": bool(self.journal.pool),
                 "written": self.journal.written,
+                "persisted": self.journal.written if self.journal.pool else 0,
                 "dropped": self.journal.dropped,
                 "failures": self.journal.failures,
                 "pending": self.journal.queue.qsize(),
@@ -384,12 +480,31 @@ class Scanner:
         if self.journal.pool:
             async with self.journal.pool.acquire() as conn:
                 settings = await conn.fetch("SELECT key,value FROM scanner_settings")
-            allowed = {"size", "min_spread_pct", "min_net", "target_basis_pct", "slippage_reserve"}
+            allowed = {
+                "size",
+                "min_spread_pct",
+                "min_net",
+                "target_basis_pct",
+                "slippage_reserve",
+                "max_slippage_bps",
+            }
             updates = {
                 r["key"]: D(__import__("json").loads(r["value"])) for r in settings if r["key"] in allowed
             }
             self.cfg = Config(**{**asdict(self.cfg), **updates})
         self.http = {v: PublicHTTP(session, v, self.metrics) for v in self.cfg.venues}
+        self.journal.append(
+            {
+                "id": "CONFIG:BOOT",
+                "asset": "CONFIG",
+                "stage": "OBSERVE",
+                "event_type": "ACTIVE_CONFIGURATION",
+                "observed_at_ms": int(time.time() * 1000),
+                "requirements_version": "1.3",
+                "configuration": asdict(self.cfg),
+                "rejection_codes": [],
+            }
+        )
         self.tasks = [
             asyncio.create_task(self.consume()),
             asyncio.create_task(self.depth_loop()),
@@ -397,6 +512,7 @@ class Scanner:
             asyncio.create_task(self.journal.run(self.stop)),
         ]
         self.tasks.append(asyncio.create_task(self.funding_interval_loop()))
+        self.tasks.append(asyncio.create_task(self.clock_loop()))
         self.tasks += [asyncio.create_task(self.catalogs(v)) for v in self.cfg.venues]
 
     async def close(self):

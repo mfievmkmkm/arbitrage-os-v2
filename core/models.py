@@ -22,6 +22,13 @@ class Reason(StrEnum):
     FUNDING = "FUNDING_UNAVAILABLE"
     NET = "NET_TARGET_NOT_REACHABLE"
     COUNTERPART = "NO_COUNTERPART"
+    EMPTY = "ORDERBOOK_EMPTY"
+    CROSSED = "ORDERBOOK_CROSSED"
+    INVALID_BOOK = "ORDERBOOK_INVALID_LEVELS"
+    BOOK_SKEW = "ORDERBOOK_TIMESTAMP_SKEW"
+    INVALID_TIME = "INVALID_MARKET_TIME"
+    OUTAGE = "DATA_PROVIDER_OUTAGE"
+    SLIPPAGE = "SLIPPAGE_LIMIT_EXCEEDED"
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +91,25 @@ class Book:
     received: float = field(default_factory=time.monotonic)
     sequence: int | None = None
     valid: bool = True
+    cross_sequence: int | None = None
+
+    def rejection(self):
+        if not self.valid:
+            return Reason.GAP
+        if not self.bids or not self.asks:
+            return Reason.EMPTY
+        if any(not p.is_finite() or not q.is_finite() or p <= 0 or q <= 0 for p, q in self.bids + self.asks):
+            return Reason.INVALID_BOOK
+        if (
+            self.bids != sorted(self.bids, reverse=True)
+            or self.asks != sorted(self.asks)
+            or len({p for p, _ in self.bids}) != len(self.bids)
+            or len({p for p, _ in self.asks}) != len(self.asks)
+        ):
+            return Reason.INVALID_BOOK
+        if self.bids[0][0] > self.asks[0][0]:
+            return Reason.CROSSED
+        return None
 
 
 @dataclass(slots=True)
@@ -130,5 +156,7 @@ class Signal:
     quote_source_timestamps_ms: list[int] = field(default_factory=list)
     orderbook_sequences: list[int | None] = field(default_factory=list)
     max_symmetric_qty_base: str | None = None
+    max_executable_notional_usd: str | None = None
     first_seen_at_ms: int = 0
     peak_spread_pct: float = 0
+    size_checks: list[dict] = field(default_factory=list)

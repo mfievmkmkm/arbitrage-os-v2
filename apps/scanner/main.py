@@ -77,7 +77,14 @@ def api(scanner):
         if not token or request.headers.get("Authorization") != "Bearer " + token:
             raise web.HTTPForbidden()
         row = await request.json()
-        permitted = {"size", "min_spread_pct", "min_net", "target_basis_pct", "slippage_reserve"}
+        permitted = {
+            "size",
+            "min_spread_pct",
+            "min_net",
+            "target_basis_pct",
+            "slippage_reserve",
+            "max_slippage_bps",
+        }
         if set(row) - permitted:
             raise web.HTTPBadRequest(text="Unsupported settings")
         try:

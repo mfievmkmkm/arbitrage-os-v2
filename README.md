@@ -1,6 +1,6 @@
 # ARBITRAGE OS v2 · OBSERVE
 
-Новый независимый Python 3.12 сканер A1: **только Bybit/BingX USDT linear perpetual**.
+Продолжаемый Python 3.12 проект, требования v1.3, сканер A1: **только Bybit/BingX USDT linear perpetual**.
 Приватных биржевых API, ордеров, PAPER и LIVE в этом релизе нет.
 
 Фактическая готовность и ограничения: [docs/STATUS.md](docs/STATUS.md).
@@ -98,18 +98,40 @@ Hot quotes не записываются каждый тик в БД. Истор
 Внешние расширения DEX/spot/transfer/executor не реализованы; нормализованные модели и
 границы адаптеров позволяют добавить их позже отдельными этапами.
 
-## Публикация в новом GitHub
+## Публикация существующей истории в GitHub
 
-Доступный GitHub connector не умеет создавать repository. Владелец создаёт пустой private
-`arbitrage-os-v2` через https://github.com/new — без README, .gitignore и license.
-Не используйте старый arbitrage-engine. После создания передайте URL для публикации
-подготовленного проекта через подключённый GitHub.
+Репозиторий уже создан: https://github.com/mfievmkmkm/arbitrage-os-v2 (PUBLIC).
+Из этой командной среды `git push` не авторизован; connector API не переносит исходные
+commit metadata с сохранением SHA. История не переписывалась. Для Windows CMD:
 
-В архиве также есть переносимый `arbitrage-os-v2.bundle` с локальной историей. При желании
-можно клонировать его, добавить remote нового repo и выполнить `git push -u origin main`.
+```bat
+cd /d "%USERPROFILE%\Downloads"
+tar -xf ARBITRAGE_OS_V2_V1_3_UPDATE.zip
+git clone arbitrage-os-v2.bundle arbitrage-os-v2-git
+cd arbitrage-os-v2-git
+git remote set-url origin https://github.com/mfievmkmkm/arbitrage-os-v2.git
+git push -u origin main
+```
+
+Если используется исходный архив, первая команда распаковки:
+`tar -xf ARBITRAGE_OS_V2_OBSERVE_0_1_0.zip`; он публикует только исходные два commits,
+а новый архив включает также текущие исправления. Для каждой распаковки/clone используйте
+отдельную пустую папку, чтобы не перезаписать свой checkout. Git for Windows выполняет
+авторизацию через Credential Manager; не вставляйте token в remote URL.
+Не выполнять `git init`, amend/rebase/orphan, `--force` или пересоздание commits.
+Оба dc7a92e/f8db3be должны оставаться предками HEAD. После clone доступен
+`scripts\publish_windows.cmd` для проверенной обычной публикации.
 
 ## Дальнейшая приёмка
 
 Нужны доступный официальный Bybit public API в разрешённом окружении, доказательный registry,
 прогон с PostgreSQL и Telegram владельца, оба WS потока, длительное observation ≥24 ч,
 реальные кандидаты и отказы. До этого этап 1A не считается принятым.
+
+
+Требования v1.3: полный этап 1 обязательно включает 1B — Spot Bybit/BingX и DEX BNB Chain,
+Base, Arbitrum с on-chain discovery и size-aware buy/sell quotes. Текущая работа остаётся 1A.
+Подготовка облачного запуска: [CLOUD_RUNBOOK](docs/CLOUD_RUNBOOK.md).
+Независимая диагностика: `python scripts/diagnose_public.py`.
+Проверка истории на секреты: `python scripts/check_secrets.py --history`.
+Наблюдаемые размеры: `OBSERVE_SIZES_USD=50,100,250`; проскальзывание: `MAX_SLIPPAGE_BPS=50`.

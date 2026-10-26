@@ -25,8 +25,9 @@ class Journal:
                     key TEXT PRIMARY KEY, value JSONB NOT NULL);""")
 
     def append(self, payload):
-        event = (uuid.uuid4(), payload["id"], json.dumps(payload))
-        self.recent.append(payload)
+        serialized = json.dumps(payload, default=str)
+        event = (uuid.uuid4(), payload["id"], serialized)
+        self.recent.append(json.loads(serialized))
         try:
             self.queue.put_nowait(event)
         except asyncio.QueueFull:

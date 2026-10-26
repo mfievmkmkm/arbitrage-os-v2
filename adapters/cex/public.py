@@ -1,6 +1,7 @@
 """Public endpoints only. No signing, account, order or transfer methods exist."""
 
 import asyncio
+import hashlib
 import json
 import random
 import time
@@ -19,7 +20,10 @@ WS = {
 
 
 class ProviderError(Exception):
-    pass
+    def __init__(self, code, evidence=None):
+        super().__init__(code)
+        self.code = code
+        self.evidence = evidence or {}
 
 
 class PublicHTTP:
@@ -27,11 +31,15 @@ class PublicHTTP:
         self.session, self.venue, self.metrics = session, venue, metrics
         self.lock = asyncio.Lock()
         self.last = 0.0
+        self.request_paths = Counter()
+        self.request_timings = {}
 
     async def get(self, path, params=None):
+        self.request_paths[path] += 1
         async with self.lock:
             await asyncio.sleep(max(0, 1.05 - (time.monotonic() - self.last)))
             self.last = time.monotonic()
+            sent_ms = time.time() * 1000
             async with self.session.get(REST[self.venue] + path, params=params, timeout=15) as r:
                 if r.status == 429:
                     self.metrics["http_429"] += 1
@@ -41,6 +49,18 @@ class PublicHTTP:
                 if r.status != 200:
                     raise ProviderError(f"HTTP_{r.status}")
                 # An HTML access-denial page can have status 200. Never call it an empty catalog.
+                if "text/html" in r.headers.get("Content-Type", "").lower():
+                    body = await r.content.read(4096)
+                    raise ProviderError(
+                        "PUBLIC_API_HTML_UNAVAILABLE",
+                        {
+                            "http_status": r.status,
+                            "content_type": r.headers.get("Content-Type"),
+                            "body_sha256": hashlib.sha256(body).hexdigest(),
+                            "body_bytes_sampled": len(body),
+                            "diagnosis": "NON_API_RESPONSE_NETWORK_OR_UPSTREAM; REGION_NOT_ESTABLISHED",
+                        },
+                    )
                 try:
                     data = await r.json(content_type=None)
                 except (ValueError, UnicodeError):
@@ -51,6 +71,7 @@ class PublicHTTP:
                         self.metrics["http_429"] += 1
                         await asyncio.sleep(5)
                     raise ProviderError(f"API_CODE_{code}")
+                self.request_timings[path] = {"sent_ms": sent_ms, "received_ms": time.time() * 1000}
                 return data
 
 
@@ -161,7 +182,7 @@ def decode(payload):
 class BybitParser:
     def __init__(self):
         self.cache = {}
-        self.field_times = {}
+        self.last_timestamp = {}
         self.funding_intervals = {}
 
     def parse(self, msg):
@@ -169,19 +190,19 @@ class BybitParser:
             return None
         row = msg["data"]
         symbol = row["symbol"]
+        if int(msg["ts"]) < self.last_timestamp.get(symbol, 0):
+            raise ProviderError("INVALID_MARKET_TIME")
+        self.last_timestamp[symbol] = int(msg["ts"])
         if msg.get("type") == "snapshot":
             self.cache[symbol] = {}
-            self.field_times[symbol] = {}
         state = self.cache.setdefault(symbol, {})
         state.update(row)
-        stamps = self.field_times.setdefault(symbol, {})
-        for key in row:
-            stamps[key] = int(msg["ts"])
         fields = ("bid1Price", "ask1Price", "bid1Size", "ask1Size")
         # Funding/mark-only deltas must not refresh the timestamp of an old bid/ask.
         quote = None
         if any(k in row for k in fields) and all(k in state for k in fields):
-            quote = Quote(*(D(state[k]) for k in fields), min(stamps[k] for k in fields))
+            # Unchanged fields remain authoritative within the same uninterrupted delta stream.
+            quote = Quote(*(D(state[k]) for k in fields), int(msg["ts"]))
         funding = None
         if "fundingRate" in row and state.get("nextFundingTime"):
             funding = Funding(
@@ -195,11 +216,13 @@ class IncrementalBook:
 
     def __init__(self, venue):
         self.venue, self.seq, self.bids, self.asks = venue, None, {}, {}
+        self.cross_sequence = None
 
     def apply(self, msg):
         data = msg["data"]
         snapshot = msg.get("type") == "snapshot" if self.venue == "bybit" else data.get("action") == "all"
         seq = int(data["u"] if self.venue == "bybit" else data["lastUpdateId"])
+        cross = data.get("seq")
         if self.venue == "bybit" and seq == 1:
             snapshot = True
         if snapshot:
@@ -209,6 +232,7 @@ class IncrementalBook:
             self.seq is None
             or (self.venue == "bingx" and seq != self.seq + 1)
             or (self.venue == "bybit" and seq <= self.seq)
+            or (cross is not None and self.cross_sequence is not None and int(cross) < self.cross_sequence)
         ):
             self.seq = None
             return Book([], [], int(msg.get("ts", data.get("T", 0))), valid=False)
@@ -227,11 +251,13 @@ class IncrementalBook:
         if len(self.bids) + len(self.asks) > 2000:
             raise ProviderError("BOOK_TOO_LARGE")
         self.seq = seq
+        self.cross_sequence = int(cross) if cross is not None else None
         return Book(
             sorted(self.bids.items(), reverse=True),
             sorted(self.asks.items()),
-            int(msg.get("ts", data.get("T", 0))),
+            int(msg.get("cts", msg.get("ts", data.get("T", 0)))),
             sequence=seq,
+            cross_sequence=self.cross_sequence,
         )
 
 
@@ -257,6 +283,7 @@ async def stream(session, venue, symbols, emit, health, metrics, stop, depth=Fal
                 max_msg_size=4 * 1024 * 1024,
                 timeout=ClientWSTimeout(ws_receive=45, ws_close=10),
             ) as ws:
+                metrics[f"{venue}_ws_connected"] += 1
                 health["connections"] = health.get("connections", 0) + 1
                 if venue == "bybit":
                     for i in range(0, len(symbols), 10):
