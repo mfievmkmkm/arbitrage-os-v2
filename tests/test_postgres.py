@@ -21,6 +21,8 @@ async def test_postgres_persists_after_reconnect():
     recovered = Journal(dsn)
     await recovered.connect()
     assert any(r["id"] == "integration-restart" for r in await recovered.history())
+    assert all(r["id"] == "integration-restart" for r in await recovered.history(200, "integration-restart"))
+    assert await recovered.history(200, "non-existent-health-probe") == []
     storage_stop = asyncio.Event()
     monitor = asyncio.create_task(recovered.monitor_storage(storage_stop))
     try:

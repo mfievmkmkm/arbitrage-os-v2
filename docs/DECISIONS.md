@@ -106,3 +106,13 @@
     символьным сравнением; DEX token-address proof этим не заменяется.
 39. DB monitor показывает фактический размер database/table и рост, но не выдаёт это за свободное
     место всего volume (WAL/other files не включены). История автоматически не удаляется.
+
+40. Реальный monitor на 812c3ab показал ~60 kB/s database growth. Повторные BLOCKED решения
+    агрегируются в bounded windows: timestamps, count, per-code counts, min/max spread и последний
+    полный sample. Start/end/verification state transitions не сворачиваются. Это разрешённые
+    агрегаты, не обещание сохранения каждого raw tick; существующие записи не удаляются.
+41. RAW TTL зависит от quotes; VERIFIED TTL дополнительно от executable books. Неизвестный или
+    устаревший book оставляет BLOCKED raw visible, не выдавая оценку исполнения.
+42. Фактическое суточное наблюдение проверяется по durable OBSERVATION_HEALTH snapshots каждые
+    600 s, выборка по signal_id параметризована и indexed. Наличие этого механизма не означает,
+    что уже накоплены сутки, полного coverage или что free credit/volume точно хватит.

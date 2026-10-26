@@ -71,7 +71,11 @@ def api(scanner):
         return web.json_response(json_safe(rows))
 
     async def history(request):
-        return web.json_response(await scanner.journal.history())
+        try:
+            limit = int(request.query.get("limit", "50"))
+        except ValueError:
+            raise web.HTTPBadRequest(text="Invalid history limit") from None
+        return web.json_response(await scanner.journal.history(limit, request.query.get("signal_id")))
 
     async def reasons(request):
         return web.json_response(

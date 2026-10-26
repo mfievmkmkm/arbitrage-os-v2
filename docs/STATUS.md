@@ -2,6 +2,30 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Промежуточная рыночная проверка новой версии · 27.10.2026
+
+Runtime 812c3ab развернут (Railway deployment 17d74855-2bda-454c-a5e5-84c3e2742ca7 SUCCESS).
+GitHub CI 40399402656: Linux/Windows/Postgres/Docker SUCCESS, включая реальные storage SQL и
+Docker DB restart persistence. Новое фактическое окно 187 s: 620496 quote events, queue=0,
+dropped=0, Bybit/BingX quote connections 21/25 без reconnect; depth отдельно 12/12.
+Bybit quotes p95 3853 ms вместо прежних 185702 ms; fresh 505/811, BingX 993/993 и p95 668 ms.
+Funding usable Bybit 811/811; BingX 16/993, остальные 977 требуют подтверждения интервала.
+Compatible pairs=2, directed routes=4 (BTC/ETH). RAW=21, VERIFIED=0, EXECUTABLE=0.
+Полное evidence: evidence/railway-feed-fix-2026-10-27.json. Это не 24 h и не полная приёмка.
+
+**Найден эксплуатационный блокер:** фактический DB growth около 59–60 kB/s; Free 500 MB
+недостаточно для суток такого журнала. Следующее исправление агрегирует повторные BLOCKED
+обновления в окна до ~10 s с count/причинами/min-max spread/временем/последним полным sample.
+Discovery, terminal events, VERIFIED transitions/revocations остаются отдельными. История
+не удаляется; это агрегаты отклонённых наблюдений, не tick-by-tick replay.
+RAW TTL опирается на две свежие котировки; старый/отсутствующий book запрещает VERIFIED,
+но не скрывает свежий BLOCKED raw candidate. VERIFIED TTL по-прежнему ограничен quotes/books.
+
+Для последующего суточного аудита сохраняется OBSERVATION_HEALTH каждые 600 s в Postgres;
+/history?signal_id=INFRA:observation-health&limit=200 читает до 200 последних снимков.
+Счётчики journal events и evaluated updates раздельны. Новые локальные тесты: 76 passed,
+1 skipped, Ruff pass. Новое сжатие пока требует отдельного CI/деплоя и измерения реального роста.
+
 ## Обновление потоков и диагностики · 27.10.2026 · до нового деплоя
 
 Подготовлен новый runtime: broad Bybit `orderbook.1` snapshot вместо ticker-delta; `ts` подтверждает

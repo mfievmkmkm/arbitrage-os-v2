@@ -99,12 +99,6 @@ def evaluate(a, b, qa, qb, ba, bb, fa, fb, cfg, now_ms=None, now=None):
         > cfg.max_skew_ms
     ):
         reasons.append(Reason.BOOK_SKEW)
-    if ba and bb:
-        s.expires_at_ms = min(
-            s.expires_at_ms,
-            *(b.source_ms + int(cfg.quote_ttl * 1000) for b in (ba, bb)),
-            *(now_ms + int((cfg.quote_ttl - (now - b.received)) * 1000) for b in (ba, bb)),
-        )
     if a.taker_fee is None or b.taker_fee is None:
         reasons.append(Reason.FEES)
     horizon_ms = now_ms + cfg.hold_seconds * 1000
@@ -169,6 +163,14 @@ def evaluate(a, b, qa, qb, ba, bb, fa, fb, cfg, now_ms=None, now=None):
             if scenario < cfg.min_net:
                 reasons.append(Reason.NET)
     s.stage = "BLOCKED" if reasons else "VERIFIED"
+    if s.stage == "VERIFIED":
+        # Blocked raw candidates may await a new book while their source quotes remain fresh.
+        # Only VERIFIED freshness depends on every executable book as well as both quotes.
+        s.expires_at_ms = min(
+            s.expires_at_ms,
+            *(book.source_ms + int(cfg.quote_ttl * 1000) for book in (ba, bb)),
+            *(now_ms + int((cfg.quote_ttl - (now - book.received)) * 1000) for book in (ba, bb)),
+        )
     return s
 
 

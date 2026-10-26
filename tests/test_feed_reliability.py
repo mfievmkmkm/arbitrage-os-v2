@@ -179,3 +179,72 @@ def test_quote_extra_metadata_remains_json_serializable():
 
     q = BybitTopParser().parse(top())[1]
     assert json.loads(json.dumps(json_safe(asdict(q))))["matching_engine_ms"] == 1000
+
+
+def test_rejected_update_windows_preserve_counts_extremes_and_terminal_order():
+    from core.evaluator import evaluate
+
+    scanner = Scanner()
+    a, b = instrument(asset_id=None), instrument("bingx", asset_id=None)
+    qa, qb, ba, bb, f = market()
+    first = evaluate(a, b, qa, qb, ba, bb, f, f, scanner.cfg)
+    scanner.record_signal(first, None)
+    previous = first
+    for i in range(1000):
+        signal = replace(
+            first,
+            raw_spread_pct=float(i) / 100,
+            rejection_codes=[Reason.IDENTITY, Reason.BOOK] if i % 2 else [Reason.IDENTITY],
+        )
+        scanner.record_signal(signal, previous)
+        previous = signal
+    # One full start plus one aggregate, rather than 1000 alternating-reason rows.
+    scanner.flush_rejection_window(first.id)
+    rows = list(scanner.journal.recent)
+    assert len(rows) == 2
+    window = rows[1]["aggregation"]
+    assert window["observations"] == 1000
+    assert window["rejection_counts"][Reason.IDENTITY] == 1000
+    assert window["rejection_counts"][Reason.BOOK] == 500
+    assert window["raw_spread_min_pct"] == 0 and window["raw_spread_max_pct"] == 9.99
+    verified = replace(previous, stage="VERIFIED", rejection_codes=[])
+    scanner.record_signal(verified, previous)
+    assert scanner.journal.recent[-1]["stage"] == "VERIFIED"
+
+
+def test_stale_book_blocks_verification_without_hiding_fresh_raw_candidate():
+    from core.evaluator import evaluate
+
+    a, b = instrument(), instrument("bingx")
+    qa, qb, ba, bb, f = market()
+    ba.source_ms -= 10000
+    signal = evaluate(a, b, qa, qb, ba, bb, f, f, Scanner().cfg)
+    assert signal.stage == "BLOCKED" and Reason.STALE in signal.rejection_codes
+    assert signal.expires_at_ms > int(time.time() * 1000)
+    assert signal.immediate_round_trip_net_usd is None
+
+
+def test_verified_signal_expires_with_its_oldest_executable_book():
+    from core.evaluator import evaluate
+
+    a, b = instrument(), instrument("bingx")
+    qa, qb, ba, bb, f = market()
+    ba.source_ms -= 500
+    signal = evaluate(a, b, qa, qb, ba, bb, f, f, Scanner().cfg)
+    assert signal.stage == "VERIFIED"
+    assert signal.expires_at_ms <= ba.source_ms + 2000
+
+
+@pytest.mark.asyncio
+async def test_health_history_query_is_scoped_and_parameterized():
+    from aiohttp.test_utils import TestClient
+
+    from apps.scanner.main import api
+
+    scanner = Scanner()
+    scanner.journal.append({"id": "A1:other", "stage": "BLOCKED"})
+    scanner.journal.append({"id": "INFRA:observation-health", "stage": "OBSERVE"})
+    async with TestClient(TestServer(api(scanner))) as client:
+        response = await client.get("/history?signal_id=INFRA:observation-health&limit=200")
+        assert [r["id"] for r in await response.json()] == ["INFRA:observation-health"]
+        assert (await client.get("/history?limit=not-a-number")).status == 400

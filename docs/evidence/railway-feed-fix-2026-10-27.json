@@ -1,0 +1,2278 @@
+{
+  "runtime_commit": "812c3ab0450ef494db39e9ba2e1f16c6f41f235b",
+  "deployment_id": "17d74855-2bda-454c-a5e5-84c3e2742ca7",
+  "ci_run": 40399402656,
+  "ci_jobs": "Linux, Windows, real Postgres storage SQL, Docker DB restart all SUCCESS",
+  "observed_on_local_date": "2026-10-27",
+  "type": "REAL_LIVE_MARKET_OBSERVE",
+  "status_samples": [
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 1,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 1
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 1,
+          "/openApi/swap/v2/quote/premiumIndex": 1
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 12,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 164.583984375,
+            "rtt_ms": 496.69140625,
+            "request_including_rate_limit_ms": 2598.592452937737,
+            "uncertainty_ms": 248.345703125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048152828,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048162053,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3022,
+          "identified": 2,
+          "fresh_quotes": 573,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 0,
+          "funding_usable": 0,
+          "funding_blockers": {
+            "FUNDING_NOT_RECEIVED": 811
+          },
+          "depth_books": 12
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 2.64208984375,
+            "rtt_ms": 189.825927734375,
+            "request_including_rate_limit_ms": 1240.097883855924,
+            "uncertainty_ms": 94.9129638671875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048151470,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048162054,
+          "quote_age_p95_ms": 652,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 0,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 993
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 20,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.21902704611420631,
+        "p95": 7.822501938790083,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.23789703845977783,
+        "p95": 7.80605198815465,
+        "samples": 9945,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 3.124454295,
+      "rss_bytes": 86499328,
+      "queue_lag_p95_ms": 7.805882021784782,
+      "queue_depth": 1,
+      "metrics": {
+        "bingx_ws_connected": 37,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 1,
+        "bingx_funding_refreshes": 1,
+        "bybit_ws_connected": 33,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 23422,
+        "quote_events": 22187,
+        "bybit_depth_ws_connected": 12,
+        "bingx_depth_ws_connected": 12,
+        "ping_pong": 33,
+        "pair_comparisons": 19890,
+        "candidate_updates": 1198,
+        "raw_discoveries": 53
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 163,
+        "QUOTE_STALE": 53,
+        "QUOTE_TIMESTAMP_SKEW": 85,
+        "ORDERBOOK_UNAVAILABLE": 146,
+        "FUNDING_UNAVAILABLE": 163,
+        "FUNDING_INTERVAL_UNVERIFIED": 163,
+        "FUNDING_NOT_RECEIVED": 163,
+        "ORDERBOOK_TIMESTAMP_SKEW": 3
+      },
+      "journal": {
+        "durable": true,
+        "written": 184,
+        "persisted": 184,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 4,
+        "storage": {
+          "database_bytes": 58891287,
+          "signal_events_bytes": 51109888,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048150255,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": null
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 1,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 1
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 1,
+          "/openApi/swap/v2/quote/premiumIndex": 1
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 31,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 164.583984375,
+            "rtt_ms": 496.69140625,
+            "request_including_rate_limit_ms": 2598.592452937737,
+            "uncertainty_ms": 248.345703125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048152828,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048181474,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 2917,
+          "identified": 2,
+          "fresh_quotes": 584,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 0,
+          "funding_usable": 0,
+          "funding_blockers": {
+            "FUNDING_NOT_RECEIVED": 811
+          },
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 2.64208984375,
+            "rtt_ms": 189.825927734375,
+            "request_including_rate_limit_ms": 1240.097883855924,
+            "uncertainty_ms": 94.9129638671875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048151470,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048181475,
+          "quote_age_p95_ms": 602,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 0,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 993
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 22,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.07020891644060612,
+        "p95": 0.7589389570057392,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.08626817725598812,
+        "p95": 0.6993899587541819,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 12.724623694,
+      "rss_bytes": 89387008,
+      "queue_lag_p95_ms": 0.687330961227417,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 37,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 1,
+        "bingx_funding_refreshes": 1,
+        "bybit_ws_connected": 33,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 92465,
+        "quote_events": 87017,
+        "bybit_depth_ws_connected": 12,
+        "bingx_depth_ws_connected": 12,
+        "ping_pong": 178,
+        "pair_comparisons": 96460,
+        "candidate_updates": 7204,
+        "raw_discoveries": 177
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 705,
+        "QUOTE_STALE": 234,
+        "QUOTE_TIMESTAMP_SKEW": 395,
+        "ORDERBOOK_UNAVAILABLE": 499,
+        "FUNDING_UNAVAILABLE": 705,
+        "FUNDING_INTERVAL_UNVERIFIED": 705,
+        "FUNDING_NOT_RECEIVED": 705,
+        "ORDERBOOK_TIMESTAMP_SKEW": 98
+      },
+      "journal": {
+        "durable": true,
+        "written": 853,
+        "persisted": 853,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 2,
+        "storage": {
+          "database_bytes": 58891287,
+          "signal_events_bytes": 51109888,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048150255,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": null
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 2,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 1
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 1,
+          "/openApi/swap/v2/quote/premiumIndex": 2
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 51,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 164.583984375,
+            "rtt_ms": 496.69140625,
+            "request_including_rate_limit_ms": 2598.592452937737,
+            "uncertainty_ms": 248.345703125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048152828,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048200906,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3032,
+          "identified": 2,
+          "fresh_quotes": 594,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 2.64208984375,
+            "rtt_ms": 189.825927734375,
+            "request_including_rate_limit_ms": 1240.097883855924,
+            "uncertainty_ms": 94.9129638671875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048151470,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048200906,
+          "quote_age_p95_ms": 527,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 0,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 993
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 24,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.06472901441156864,
+        "p95": 0.5718930624425411,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.08006906136870384,
+        "p95": 0.571053009480238,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 21.89540312,
+      "rss_bytes": 95735808,
+      "queue_lag_p95_ms": 0.473592896014452,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 45,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 2,
+        "bingx_funding_refreshes": 2,
+        "bybit_ws_connected": 41,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 161846,
+        "quote_events": 151751,
+        "bybit_depth_ws_connected": 20,
+        "bingx_depth_ws_connected": 20,
+        "ping_pong": 315,
+        "pair_comparisons": 173378,
+        "candidate_updates": 13556,
+        "raw_discoveries": 303,
+        "bybit_depth_planned_unsubscribes": 8,
+        "bingx_depth_planned_unsubscribes": 8
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 1305,
+        "QUOTE_STALE": 432,
+        "QUOTE_TIMESTAMP_SKEW": 745,
+        "ORDERBOOK_UNAVAILABLE": 881,
+        "FUNDING_UNAVAILABLE": 1305,
+        "FUNDING_INTERVAL_UNVERIFIED": 1305,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 200
+      },
+      "journal": {
+        "durable": true,
+        "written": 1581,
+        "persisted": 1581,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 7,
+        "storage": {
+          "database_bytes": 58891287,
+          "signal_events_bytes": 51109888,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048150255,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": null
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 3,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 2
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 2,
+          "/openApi/swap/v2/quote/premiumIndex": 3,
+          "/openApi/swap/v2/quote/fundingRate": 9
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 70,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 10.0771484375,
+            "rtt_ms": 189.8984375,
+            "request_including_rate_limit_ms": 189.94631292298436,
+            "uncertainty_ms": 94.94921875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048213018,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048220479,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3113,
+          "identified": 2,
+          "fresh_quotes": 583,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 12
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": -9.93017578125,
+            "rtt_ms": 208.440673828125,
+            "request_including_rate_limit_ms": 1809.2130580917,
+            "uncertainty_ms": 104.2203369140625,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048214638,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048220479,
+          "quote_age_p95_ms": 491,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 8,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 985
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 18,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.0693590845912695,
+        "p95": 0.5786621477454901,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.08558901026844978,
+        "p95": 0.6118509918451309,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 32.246877366999996,
+      "rss_bytes": 99549184,
+      "queue_lag_p95_ms": 0.46914396807551384,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 49,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 3,
+        "bingx_funding_refreshes": 3,
+        "bybit_ws_connected": 45,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 234312,
+        "quote_events": 218722,
+        "bybit_depth_ws_connected": 24,
+        "bingx_depth_ws_connected": 24,
+        "ping_pong": 457,
+        "pair_comparisons": 256178,
+        "candidate_updates": 21467,
+        "raw_discoveries": 423,
+        "bybit_depth_planned_unsubscribes": 12,
+        "bingx_depth_planned_unsubscribes": 12,
+        "funding_intervals_observed": 8
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 1893,
+        "QUOTE_STALE": 632,
+        "QUOTE_TIMESTAMP_SKEW": 1090,
+        "ORDERBOOK_UNAVAILABLE": 1264,
+        "FUNDING_UNAVAILABLE": 1857,
+        "FUNDING_INTERVAL_UNVERIFIED": 1857,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 298
+      },
+      "journal": {
+        "durable": true,
+        "written": 2275,
+        "persisted": 2275,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 26,
+        "storage": {
+          "database_bytes": 62479383,
+          "signal_events_bytes": 54697984,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048210260,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 59797.383263870266
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 3,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 2
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 2,
+          "/openApi/swap/v2/quote/premiumIndex": 3,
+          "/openApi/swap/v2/quote/fundingRate": 12
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 90,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 10.0771484375,
+            "rtt_ms": 189.8984375,
+            "request_including_rate_limit_ms": 189.94631292298436,
+            "uncertainty_ms": 94.94921875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048213018,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048239945,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3868,
+          "identified": 2,
+          "fresh_quotes": 529,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": -9.93017578125,
+            "rtt_ms": 208.440673828125,
+            "request_including_rate_limit_ms": 1809.2130580917,
+            "uncertainty_ms": 104.2203369140625,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048214638,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048239944,
+          "quote_age_p95_ms": 683,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 12,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 981
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 20,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.11661788448691368,
+        "p95": 1.7797751352190971,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.13735797256231308,
+        "p95": 1.4838890638202429,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 43.837653024999994,
+      "rss_bytes": 104099840,
+      "queue_lag_p95_ms": 1.736094942316413,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 57,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 3,
+        "bingx_funding_refreshes": 3,
+        "bybit_ws_connected": 53,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 304690,
+        "quote_events": 284643,
+        "bybit_depth_ws_connected": 32,
+        "bingx_depth_ws_connected": 32,
+        "ping_pong": 593,
+        "pair_comparisons": 334286,
+        "candidate_updates": 27713,
+        "raw_discoveries": 527,
+        "bybit_depth_planned_unsubscribes": 20,
+        "bingx_depth_planned_unsubscribes": 20,
+        "funding_intervals_observed": 12
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 2469,
+        "QUOTE_STALE": 800,
+        "QUOTE_TIMESTAMP_SKEW": 1424,
+        "ORDERBOOK_UNAVAILABLE": 1663,
+        "FUNDING_UNAVAILABLE": 2270,
+        "FUNDING_INTERVAL_UNVERIFIED": 2270,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 395
+      },
+      "journal": {
+        "durable": true,
+        "written": 2978,
+        "persisted": 2978,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 10,
+        "storage": {
+          "database_bytes": 62479383,
+          "signal_events_bytes": 54697984,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048210260,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 59797.383263870266
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 4,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 2
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 2,
+          "/openApi/swap/v2/quote/premiumIndex": 4,
+          "/openApi/swap/v2/quote/fundingRate": 12
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 109,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 10.0771484375,
+            "rtt_ms": 189.8984375,
+            "request_including_rate_limit_ms": 189.94631292298436,
+            "uncertainty_ms": 94.94921875,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048213018,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048259401,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3156,
+          "identified": 2,
+          "fresh_quotes": 577,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 12
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": -9.93017578125,
+            "rtt_ms": 208.440673828125,
+            "request_including_rate_limit_ms": 1809.2130580917,
+            "uncertainty_ms": 104.2203369140625,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048214638,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048259402,
+          "quote_age_p95_ms": 682,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 12,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 981
+          },
+          "depth_books": 11
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 21,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.10496890172362328,
+        "p95": 1.367391087114811,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.12345798313617706,
+        "p95": 1.2738730292767286,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 55.280217283,
+      "rss_bytes": 109031424,
+      "queue_lag_p95_ms": 1.3046720996499062,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 64,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 4,
+        "bingx_funding_refreshes": 4,
+        "bybit_ws_connected": 60,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 375335,
+        "quote_events": 350972,
+        "bybit_depth_ws_connected": 39,
+        "bingx_depth_ws_connected": 39,
+        "ping_pong": 730,
+        "pair_comparisons": 412294,
+        "candidate_updates": 33564,
+        "raw_discoveries": 671,
+        "bybit_depth_planned_unsubscribes": 27,
+        "bingx_depth_planned_unsubscribes": 27,
+        "funding_intervals_observed": 12
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 3079,
+        "QUOTE_STALE": 1028,
+        "QUOTE_TIMESTAMP_SKEW": 1796,
+        "ORDERBOOK_UNAVAILABLE": 2126,
+        "FUNDING_UNAVAILABLE": 2705,
+        "FUNDING_INTERVAL_UNVERIFIED": 2705,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 468
+      },
+      "journal": {
+        "durable": true,
+        "written": 3734,
+        "persisted": 3734,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 11,
+        "storage": {
+          "database_bytes": 62479383,
+          "signal_events_bytes": 54697984,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048210260,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 59797.383263870266
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 5,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 3
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 3,
+          "/openApi/swap/v2/quote/premiumIndex": 4,
+          "/openApi/swap/v2/quote/fundingRate": 12
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 128,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 177.1806640625,
+            "rtt_ms": 521.97802734375,
+            "request_including_rate_limit_ms": 522.3666580859572,
+            "uncertainty_ms": 260.989013671875,
+            "usable_for_freshness": false,
+            "sampled_at_ms": 1793048275163,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048278340,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 4097,
+          "identified": 2,
+          "fresh_quotes": 606,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 18.2490234375,
+            "rtt_ms": 209.5634765625,
+            "request_including_rate_limit_ms": 210.08448512293398,
+            "uncertainty_ms": 104.78173828125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048274851,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048278340,
+          "quote_age_p95_ms": 577,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 12,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 981
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 19,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.09098812006413937,
+        "p95": 0.946796964854002,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.10946905240416527,
+        "p95": 0.9880659636110067,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 66.240644212,
+      "rss_bytes": 111824896,
+      "queue_lag_p95_ms": 0.8811680600047112,
+      "queue_depth": 1,
+      "metrics": {
+        "bingx_ws_connected": 67,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 4,
+        "bingx_funding_refreshes": 4,
+        "bybit_ws_connected": 63,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 448802,
+        "quote_events": 419269,
+        "bybit_depth_ws_connected": 42,
+        "bingx_depth_ws_connected": 42,
+        "ping_pong": 866,
+        "pair_comparisons": 497380,
+        "candidate_updates": 40270,
+        "raw_discoveries": 798,
+        "bybit_depth_planned_unsubscribes": 30,
+        "bingx_depth_planned_unsubscribes": 30,
+        "funding_intervals_observed": 12
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 3653,
+        "QUOTE_STALE": 1212,
+        "QUOTE_TIMESTAMP_SKEW": 2136,
+        "ORDERBOOK_UNAVAILABLE": 2576,
+        "FUNDING_UNAVAILABLE": 3129,
+        "FUNDING_INTERVAL_UNVERIFIED": 3129,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 532
+      },
+      "journal": {
+        "durable": true,
+        "written": 4443,
+        "persisted": 4443,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 8,
+        "storage": {
+          "database_bytes": 66100247,
+          "signal_events_bytes": 58310656,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048270267,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 60340.76157889989
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 5,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 3
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 3,
+          "/openApi/swap/v2/quote/premiumIndex": 5,
+          "/openApi/swap/v2/quote/fundingRate": 16
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 148,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 31,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 177.1806640625,
+            "rtt_ms": 521.97802734375,
+            "request_including_rate_limit_ms": 522.3666580859572,
+            "uncertainty_ms": 260.989013671875,
+            "usable_for_freshness": false,
+            "sampled_at_ms": 1793048275163,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048298001,
+          "depth_connections": 10,
+          "quote_age_p95_ms": 4312,
+          "identified": 2,
+          "fresh_quotes": 460,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 10
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 35,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 18.2490234375,
+            "rtt_ms": 209.5634765625,
+            "request_including_rate_limit_ms": 210.08448512293398,
+            "uncertainty_ms": 104.78173828125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048274851,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 10,
+          "last_event_ms": 1793048298000,
+          "quote_age_p95_ms": 687,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 16,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 977
+          },
+          "depth_books": 10
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 16,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.06463914178311825,
+        "p95": 0.6101420149207115,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.07859896868467331,
+        "p95": 0.5887008737772703,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 76.083021552,
+      "rss_bytes": 116805632,
+      "queue_lag_p95_ms": 0.5287330131977797,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 73,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 5,
+        "bingx_funding_refreshes": 5,
+        "bybit_ws_connected": 69,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 521546,
+        "quote_events": 486883,
+        "bybit_depth_ws_connected": 48,
+        "bingx_depth_ws_connected": 48,
+        "ping_pong": 1007,
+        "pair_comparisons": 579844,
+        "candidate_updates": 46558,
+        "raw_discoveries": 956,
+        "bybit_depth_planned_unsubscribes": 38,
+        "bingx_depth_planned_unsubscribes": 38,
+        "funding_intervals_observed": 16
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 4257,
+        "QUOTE_STALE": 1438,
+        "QUOTE_TIMESTAMP_SKEW": 2501,
+        "ORDERBOOK_UNAVAILABLE": 3052,
+        "FUNDING_UNAVAILABLE": 3549,
+        "FUNDING_INTERVAL_UNVERIFIED": 3549,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 588
+      },
+      "journal": {
+        "durable": true,
+        "written": 5222,
+        "persisted": 5222,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 0,
+        "storage": {
+          "database_bytes": 66100247,
+          "signal_events_bytes": 58310656,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048270267,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 60340.76157889989
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 6,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 3
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 3,
+          "/openApi/swap/v2/quote/premiumIndex": 6,
+          "/openApi/swap/v2/quote/fundingRate": 16
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 167,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 177.1806640625,
+            "rtt_ms": 521.97802734375,
+            "request_including_rate_limit_ms": 522.3666580859572,
+            "uncertainty_ms": 260.989013671875,
+            "usable_for_freshness": false,
+            "sampled_at_ms": 1793048275163,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048317500,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3384,
+          "identified": 2,
+          "fresh_quotes": 602,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 18.2490234375,
+            "rtt_ms": 209.5634765625,
+            "request_including_rate_limit_ms": 210.08448512293398,
+            "uncertainty_ms": 104.78173828125,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048274851,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048317501,
+          "quote_age_p95_ms": 621,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 16,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 977
+          },
+          "depth_books": 12
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 22,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.04878896288573742,
+        "p95": 0.3828550688922405,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.05826912820339203,
+        "p95": 0.44687394984066486,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 84.44498368800001,
+      "rss_bytes": 120537088,
+      "queue_lag_p95_ms": 0.26335613802075386,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 79,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 6,
+        "bingx_funding_refreshes": 6,
+        "bybit_ws_connected": 75,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 592152,
+        "quote_events": 553023,
+        "bybit_depth_ws_connected": 54,
+        "bingx_depth_ws_connected": 54,
+        "ping_pong": 1147,
+        "pair_comparisons": 657994,
+        "candidate_updates": 52312,
+        "raw_discoveries": 1059,
+        "bybit_depth_planned_unsubscribes": 42,
+        "bingx_depth_planned_unsubscribes": 42,
+        "funding_intervals_observed": 16
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 4764,
+        "QUOTE_STALE": 1623,
+        "QUOTE_TIMESTAMP_SKEW": 2818,
+        "ORDERBOOK_UNAVAILABLE": 3398,
+        "FUNDING_UNAVAILABLE": 3886,
+        "FUNDING_INTERVAL_UNVERIFIED": 3886,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 663
+      },
+      "journal": {
+        "durable": true,
+        "written": 5830,
+        "persisted": 5830,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 4,
+        "storage": {
+          "database_bytes": 66100247,
+          "signal_events_bytes": 58310656,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048270267,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 60340.76157889989
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    },
+    {
+      "requirements_version": "1.3",
+      "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+      "compatible_pairs": 2,
+      "compatible_directed_routes": 4,
+      "outbound_public_requests": {
+        "bybit": {
+          "/v5/market/tickers": 6,
+          "/v5/market/instruments-info": 1,
+          "/v5/market/time": 4
+        },
+        "bingx": {
+          "/openApi/swap/v2/quote/contracts": 1,
+          "/openApi/swap/v2/server/time": 4,
+          "/openApi/swap/v2/quote/premiumIndex": 6,
+          "/openApi/swap/v2/quote/fundingRate": 16
+        }
+      },
+      "mode": "OBSERVE",
+      "live_enabled": false,
+      "active_venues": [
+        "bybit",
+        "bingx"
+      ],
+      "uptime_seconds": 187,
+      "coverage": {
+        "bybit": {
+          "status": "PUBLIC_READY",
+          "discovered": 919,
+          "active": 811,
+          "connections": 33,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 108
+          },
+          "catalog_at_ms": 1793048152331,
+          "clock": {
+            "offset_ms": 178.961181640625,
+            "rtt_ms": 525.67822265625,
+            "request_including_rate_limit_ms": 525.7234731689095,
+            "uncertainty_ms": 262.839111328125,
+            "usable_for_freshness": false,
+            "sampled_at_ms": 1793048335689,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "quotes_connections": 21,
+          "last_event_ms": 1793048337163,
+          "depth_connections": 12,
+          "quote_age_p95_ms": 3853,
+          "identified": 2,
+          "fresh_quotes": 505,
+          "received_quotes": 811,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 362,
+          "quote_sources": {
+            "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+          },
+          "funding_received": 811,
+          "funding_usable": 811,
+          "funding_blockers": {},
+          "depth_books": 11
+        },
+        "bingx": {
+          "status": "PUBLIC_READY",
+          "discovered": 1294,
+          "active": 993,
+          "connections": 37,
+          "exclusions": {
+            "INACTIVE_OR_UNSUPPORTED": 301
+          },
+          "catalog_at_ms": 1793048150471,
+          "quotes_connections": 25,
+          "clock": {
+            "offset_ms": 7.927734375,
+            "rtt_ms": 191.44921875,
+            "request_including_rate_limit_ms": 191.62827101536095,
+            "uncertainty_ms": 95.724609375,
+            "usable_for_freshness": true,
+            "sampled_at_ms": 1793048335355,
+            "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+          },
+          "depth_connections": 12,
+          "last_event_ms": 1793048337164,
+          "quote_age_p95_ms": 668,
+          "identified": 2,
+          "fresh_quotes": 993,
+          "received_quotes": 993,
+          "symbol_counterparts_unverified": 449,
+          "no_counterpart": 544,
+          "quote_sources": {
+            "PUBLIC_WS": 993
+          },
+          "funding_received": 993,
+          "funding_usable": 16,
+          "funding_blockers": {
+            "FUNDING_INTERVAL_UNVERIFIED": 977
+          },
+          "depth_books": 11
+        }
+      },
+      "dex_pools": 0,
+      "raw_current": 21,
+      "verified_current": 0,
+      "executable": 0,
+      "paper_opened": 0,
+      "paper_closed": 0,
+      "event_processing_latency_ms": {
+        "p50": 0.055558979511260986,
+        "p95": 0.4838441964238882,
+        "samples": 20000,
+        "meaning": "WS receive to event processed (not necessarily a comparison)"
+      },
+      "latency_ms": {
+        "p50": 0.06334902718663216,
+        "p95": 0.5759310442954302,
+        "samples": 20000,
+        "meaning": "WS receive to related route comparisons complete"
+      },
+      "process_cpu_seconds": 92.667214873,
+      "rss_bytes": 125067264,
+      "queue_lag_p95_ms": 0.351794995367527,
+      "queue_depth": 0,
+      "metrics": {
+        "bingx_ws_connected": 86,
+        "bingx_quotes_ws_connected": 25,
+        "bybit_funding_refreshes": 6,
+        "bingx_funding_refreshes": 6,
+        "bybit_ws_connected": 82,
+        "bybit_quotes_ws_connected": 21,
+        "ws_frames": 664267,
+        "quote_events": 620496,
+        "bybit_depth_ws_connected": 61,
+        "bingx_depth_ws_connected": 61,
+        "ping_pong": 1286,
+        "pair_comparisons": 737790,
+        "candidate_updates": 58518,
+        "raw_discoveries": 1187,
+        "bybit_depth_planned_unsubscribes": 49,
+        "bingx_depth_planned_unsubscribes": 49,
+        "funding_intervals_observed": 16
+      },
+      "rejections_journal_events": {
+        "ASSET_IDENTITY_UNVERIFIED": 5358,
+        "QUOTE_STALE": 1860,
+        "QUOTE_TIMESTAMP_SKEW": 3196,
+        "ORDERBOOK_UNAVAILABLE": 3809,
+        "FUNDING_UNAVAILABLE": 4277,
+        "FUNDING_INTERVAL_UNVERIFIED": 4277,
+        "FUNDING_NOT_RECEIVED": 761,
+        "ORDERBOOK_TIMESTAMP_SKEW": 746
+      },
+      "journal": {
+        "durable": true,
+        "written": 6558,
+        "persisted": 6558,
+        "dropped": 0,
+        "failures": 0,
+        "pending": 2,
+        "storage": {
+          "database_bytes": 69630999,
+          "signal_events_bytes": 61841408,
+          "declared_volume_bytes": 500000000,
+          "state": "MEASURED",
+          "sampled_at_ms": 1793048330269,
+          "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+          "growth_bytes_per_second": 58843.39837829688
+        },
+        "healthy": true,
+        "last_write_error": null
+      },
+      "readiness": "OBSERVATION_ONLY"
+    }
+  ],
+  "final_status": {
+    "requirements_version": "1.3",
+    "data_mode": "REAL_LIVE_MARKET_OBSERVE",
+    "compatible_pairs": 2,
+    "compatible_directed_routes": 4,
+    "outbound_public_requests": {
+      "bybit": {
+        "/v5/market/tickers": 6,
+        "/v5/market/instruments-info": 1,
+        "/v5/market/time": 4
+      },
+      "bingx": {
+        "/openApi/swap/v2/quote/contracts": 1,
+        "/openApi/swap/v2/server/time": 4,
+        "/openApi/swap/v2/quote/premiumIndex": 6,
+        "/openApi/swap/v2/quote/fundingRate": 16
+      }
+    },
+    "mode": "OBSERVE",
+    "live_enabled": false,
+    "active_venues": [
+      "bybit",
+      "bingx"
+    ],
+    "uptime_seconds": 187,
+    "coverage": {
+      "bybit": {
+        "status": "PUBLIC_READY",
+        "discovered": 919,
+        "active": 811,
+        "connections": 33,
+        "exclusions": {
+          "INACTIVE_OR_UNSUPPORTED": 108
+        },
+        "catalog_at_ms": 1793048152331,
+        "clock": {
+          "offset_ms": 178.961181640625,
+          "rtt_ms": 525.67822265625,
+          "request_including_rate_limit_ms": 525.7234731689095,
+          "uncertainty_ms": 262.839111328125,
+          "usable_for_freshness": false,
+          "sampled_at_ms": 1793048335689,
+          "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+        },
+        "quotes_connections": 21,
+        "last_event_ms": 1793048337163,
+        "depth_connections": 12,
+        "quote_age_p95_ms": 3853,
+        "identified": 2,
+        "fresh_quotes": 505,
+        "received_quotes": 811,
+        "symbol_counterparts_unverified": 449,
+        "no_counterpart": 362,
+        "quote_sources": {
+          "BYBIT_ORDERBOOK_1_SNAPSHOT": 811
+        },
+        "funding_received": 811,
+        "funding_usable": 811,
+        "funding_blockers": {},
+        "depth_books": 11
+      },
+      "bingx": {
+        "status": "PUBLIC_READY",
+        "discovered": 1294,
+        "active": 993,
+        "connections": 37,
+        "exclusions": {
+          "INACTIVE_OR_UNSUPPORTED": 301
+        },
+        "catalog_at_ms": 1793048150471,
+        "quotes_connections": 25,
+        "clock": {
+          "offset_ms": 7.927734375,
+          "rtt_ms": 191.44921875,
+          "request_including_rate_limit_ms": 191.62827101536095,
+          "uncertainty_ms": 95.724609375,
+          "usable_for_freshness": true,
+          "sampled_at_ms": 1793048335355,
+          "policy": "DIAGNOSTIC_ONLY_NO_SILENT_TIMESTAMP_REWRITE"
+        },
+        "depth_connections": 12,
+        "last_event_ms": 1793048337164,
+        "quote_age_p95_ms": 668,
+        "identified": 2,
+        "fresh_quotes": 993,
+        "received_quotes": 993,
+        "symbol_counterparts_unverified": 449,
+        "no_counterpart": 544,
+        "quote_sources": {
+          "PUBLIC_WS": 993
+        },
+        "funding_received": 993,
+        "funding_usable": 16,
+        "funding_blockers": {
+          "FUNDING_INTERVAL_UNVERIFIED": 977
+        },
+        "depth_books": 11
+      }
+    },
+    "dex_pools": 0,
+    "raw_current": 21,
+    "verified_current": 0,
+    "executable": 0,
+    "paper_opened": 0,
+    "paper_closed": 0,
+    "event_processing_latency_ms": {
+      "p50": 0.055558979511260986,
+      "p95": 0.4838441964238882,
+      "samples": 20000,
+      "meaning": "WS receive to event processed (not necessarily a comparison)"
+    },
+    "latency_ms": {
+      "p50": 0.06334902718663216,
+      "p95": 0.5759310442954302,
+      "samples": 20000,
+      "meaning": "WS receive to related route comparisons complete"
+    },
+    "process_cpu_seconds": 92.667214873,
+    "rss_bytes": 125067264,
+    "queue_lag_p95_ms": 0.351794995367527,
+    "queue_depth": 0,
+    "metrics": {
+      "bingx_ws_connected": 86,
+      "bingx_quotes_ws_connected": 25,
+      "bybit_funding_refreshes": 6,
+      "bingx_funding_refreshes": 6,
+      "bybit_ws_connected": 82,
+      "bybit_quotes_ws_connected": 21,
+      "ws_frames": 664267,
+      "quote_events": 620496,
+      "bybit_depth_ws_connected": 61,
+      "bingx_depth_ws_connected": 61,
+      "ping_pong": 1286,
+      "pair_comparisons": 737790,
+      "candidate_updates": 58518,
+      "raw_discoveries": 1187,
+      "bybit_depth_planned_unsubscribes": 49,
+      "bingx_depth_planned_unsubscribes": 49,
+      "funding_intervals_observed": 16
+    },
+    "rejections_journal_events": {
+      "ASSET_IDENTITY_UNVERIFIED": 5358,
+      "QUOTE_STALE": 1860,
+      "QUOTE_TIMESTAMP_SKEW": 3196,
+      "ORDERBOOK_UNAVAILABLE": 3809,
+      "FUNDING_UNAVAILABLE": 4277,
+      "FUNDING_INTERVAL_UNVERIFIED": 4277,
+      "FUNDING_NOT_RECEIVED": 761,
+      "ORDERBOOK_TIMESTAMP_SKEW": 746
+    },
+    "journal": {
+      "durable": true,
+      "written": 6558,
+      "persisted": 6558,
+      "dropped": 0,
+      "failures": 0,
+      "pending": 2,
+      "storage": {
+        "database_bytes": 69630999,
+        "signal_events_bytes": 61841408,
+        "declared_volume_bytes": 500000000,
+        "state": "MEASURED",
+        "sampled_at_ms": 1793048330269,
+        "meaning": "Database bytes only; excludes WAL/other volume files. Not free disk space.",
+        "growth_bytes_per_second": 58843.39837829688
+      },
+      "healthy": true,
+      "last_write_error": null
+    },
+    "readiness": "OBSERVATION_ONLY"
+  },
+  "native_funding_samples": [
+    {
+      "venue": "bingx",
+      "symbol": "BTC-USDT",
+      "data": {
+        "rate": "0.00010000",
+        "next_ms": 1793059200000,
+        "interval_ms": 28800000,
+        "received": 2075114.588839615,
+        "source": "BINGX_PUBLIC_PREMIUM_INDEX_REST"
+      },
+      "age_ms": 8841.391034889966,
+      "rejection_codes": []
+    },
+    {
+      "venue": "bingx",
+      "symbol": "ETH-USDT",
+      "data": {
+        "rate": "0.00010000",
+        "next_ms": 1793059200000,
+        "interval_ms": 28800000,
+        "received": 2075114.588843795,
+        "source": "BINGX_PUBLIC_PREMIUM_INDEX_REST"
+      },
+      "age_ms": 8841.38685488142,
+      "rejection_codes": []
+    },
+    {
+      "venue": "bybit",
+      "symbol": "BTCUSDT",
+      "data": {
+        "rate": "0.00008585",
+        "next_ms": 1793059200000,
+        "interval_ms": 28800000,
+        "received": 2075113.718834464,
+        "source": "BYBIT_PUBLIC_TICKERS_REST"
+      },
+      "age_ms": 9711.396185914055,
+      "rejection_codes": []
+    },
+    {
+      "venue": "bybit",
+      "symbol": "ETHUSDT",
+      "data": {
+        "rate": "0.00002285",
+        "next_ms": 1793059200000,
+        "interval_ms": 28800000,
+        "received": 2075113.71907269,
+        "source": "BYBIT_PUBLIC_TICKERS_REST"
+      },
+      "age_ms": 9711.157959885895,
+      "rejection_codes": []
+    }
+  ],
+  "native_quote_samples": [
+    {
+      "venue": "bybit",
+      "symbol": "BTCUSDT",
+      "bid": "79829.9",
+      "ask": "79830",
+      "bid_qty": "1.786",
+      "ask_qty": "4.795",
+      "source_ms": 1793048346079,
+      "received": 2075118.928643506,
+      "source": "BYBIT_ORDERBOOK_1_SNAPSHOT",
+      "matching_engine_ms": 1793048346078,
+      "sequence": 141964692
+    },
+    {
+      "venue": "bybit",
+      "symbol": "ETHUSDT",
+      "bid": "2305.45",
+      "ask": "2305.46",
+      "bid_qty": "13.24",
+      "ask_qty": "37.93",
+      "source_ms": 1793048346123,
+      "received": 2075118.973102421,
+      "source": "BYBIT_ORDERBOOK_1_SNAPSHOT",
+      "matching_engine_ms": 1793048346122,
+      "sequence": 153718613
+    },
+    {
+      "venue": "bingx",
+      "symbol": "BTC-USDT",
+      "bid": "79841.7",
+      "ask": "79841.8",
+      "bid_qty": "3.1470",
+      "ask_qty": "63.0852",
+      "source_ms": 1793048345796,
+      "received": 2075118.655270106,
+      "source": "PUBLIC_WS",
+      "matching_engine_ms": null,
+      "sequence": null
+    },
+    {
+      "venue": "bingx",
+      "symbol": "ETH-USDT",
+      "bid": "2305.55",
+      "ask": "2305.56",
+      "bid_qty": "500.51",
+      "ask_qty": "1739.18",
+      "source_ms": 1793048345892,
+      "received": 2075118.745927653,
+      "source": "PUBLIC_WS",
+      "matching_engine_ms": null,
+      "sequence": null
+    }
+  ],
+  "signal_samples": [
+    {
+      "id": "A1:bingx:ON-USDT:bybit:ONUSDT",
+      "asset": "ON",
+      "cheap": "bingx",
+      "expensive": "bybit",
+      "raw_spread_pct": 56459.877955758966,
+      "observed_at_ms": 1793048355254,
+      "expires_at_ms": 1793048356943,
+      "rejection_codes": [
+        "ASSET_IDENTITY_UNVERIFIED"
+      ],
+      "stage": "BLOCKED",
+      "strategy": "A1",
+      "schema_version": 1,
+      "source": "INTERNAL_SCANNER",
+      "route_tradeability": "MODE_OBSERVE",
+      "size_usd": 100.0,
+      "qty_base": null,
+      "buy_vwap": null,
+      "sell_vwap": null,
+      "opening_fees_usd": null,
+      "estimated_closing_fees_usd": null,
+      "funding_expected_usd": null,
+      "immediate_round_trip_net_usd": null,
+      "scenario_net_at_target_basis_usd": null,
+      "quote_age_ms": 311,
+      "identity_proof": [],
+      "confidence_flags": [
+        "FEES_PUBLIC_CONTRACT_SCHEDULE",
+        "FEES_PUBLIC_NON_VIP_SCHEDULE_2026_10_26_NOT_ACCOUNT_SPECIFIC",
+        "TARGET_BASIS_IS_HYPOTHETICAL",
+        "NO_ACCOUNT_MARGIN_VERIFICATION",
+        "FUNDING_FORECAST_USES_CURRENT_RATE_AND_OBSERVED_INTERVAL",
+        "BINGX_DEPTH_TS_IS_MESSAGE_CONSTRUCTION_NOT_MATCHING_ENGINE"
+      ],
+      "long_symbol": "ON-USDT",
+      "short_symbol": "ONUSDT",
+      "long_bid": "0.1310",
+      "long_ask": "0.1311",
+      "short_bid": "74.15",
+      "short_ask": "74.23",
+      "quote_source_timestamps_ms": [
+        1793048354943,
+        1793048354951
+      ],
+      "orderbook_sequences": [
+        null,
+        3169410
+      ],
+      "max_symmetric_qty_base": null,
+      "max_executable_notional_usd": null,
+      "first_seen_at_ms": 1793048354788,
+      "peak_spread_pct": 56459.877955758966,
+      "size_checks": [
+        {
+          "size_usd": 100.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 50.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 250.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A1:bingx:STONK-USDT:bybit:STONKUSDT",
+      "asset": "STONK",
+      "cheap": "bingx",
+      "expensive": "bybit",
+      "raw_spread_pct": 0.6324110671936759,
+      "observed_at_ms": 1793048355404,
+      "expires_at_ms": 1793048356797,
+      "rejection_codes": [
+        "ASSET_IDENTITY_UNVERIFIED"
+      ],
+      "stage": "BLOCKED",
+      "strategy": "A1",
+      "schema_version": 1,
+      "source": "INTERNAL_SCANNER",
+      "route_tradeability": "MODE_OBSERVE",
+      "size_usd": 100.0,
+      "qty_base": null,
+      "buy_vwap": null,
+      "sell_vwap": null,
+      "opening_fees_usd": null,
+      "estimated_closing_fees_usd": null,
+      "funding_expected_usd": null,
+      "immediate_round_trip_net_usd": null,
+      "scenario_net_at_target_basis_usd": null,
+      "quote_age_ms": 607,
+      "identity_proof": [],
+      "confidence_flags": [
+        "FEES_PUBLIC_CONTRACT_SCHEDULE",
+        "FEES_PUBLIC_NON_VIP_SCHEDULE_2026_10_26_NOT_ACCOUNT_SPECIFIC",
+        "TARGET_BASIS_IS_HYPOTHETICAL",
+        "NO_ACCOUNT_MARGIN_VERIFICATION",
+        "FUNDING_FORECAST_USES_CURRENT_RATE_AND_OBSERVED_INTERVAL",
+        "BINGX_DEPTH_TS_IS_MESSAGE_CONSTRUCTION_NOT_MATCHING_ENGINE"
+      ],
+      "long_symbol": "STONK-USDT",
+      "short_symbol": "STONKUSDT",
+      "long_bid": "0.1264",
+      "long_ask": "0.1265",
+      "short_bid": "0.1273",
+      "short_ask": "0.1274",
+      "quote_source_timestamps_ms": [
+        1793048354797,
+        1793048354883
+      ],
+      "orderbook_sequences": [
+        null,
+        6222625
+      ],
+      "max_symmetric_qty_base": null,
+      "max_executable_notional_usd": null,
+      "first_seen_at_ms": 1793048354886,
+      "peak_spread_pct": 0.6324110671936759,
+      "size_checks": [
+        {
+          "size_usd": 100.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 50.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 250.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A1:bybit:QUSDT:bingx:Q-USDT",
+      "asset": "Q",
+      "cheap": "bybit",
+      "expensive": "bingx",
+      "raw_spread_pct": 0.48556614349775784,
+      "observed_at_ms": 1793048355403,
+      "expires_at_ms": 1793048356712,
+      "rejection_codes": [
+        "ASSET_IDENTITY_UNVERIFIED"
+      ],
+      "stage": "BLOCKED",
+      "strategy": "A1",
+      "schema_version": 1,
+      "source": "INTERNAL_SCANNER",
+      "route_tradeability": "MODE_OBSERVE",
+      "size_usd": 100.0,
+      "qty_base": null,
+      "buy_vwap": null,
+      "sell_vwap": null,
+      "opening_fees_usd": null,
+      "estimated_closing_fees_usd": null,
+      "funding_expected_usd": null,
+      "immediate_round_trip_net_usd": null,
+      "scenario_net_at_target_basis_usd": null,
+      "quote_age_ms": 691,
+      "identity_proof": [],
+      "confidence_flags": [
+        "FEES_PUBLIC_NON_VIP_SCHEDULE_2026_10_26_NOT_ACCOUNT_SPECIFIC",
+        "FEES_PUBLIC_CONTRACT_SCHEDULE",
+        "TARGET_BASIS_IS_HYPOTHETICAL",
+        "NO_ACCOUNT_MARGIN_VERIFICATION",
+        "FUNDING_FORECAST_USES_CURRENT_RATE_AND_OBSERVED_INTERVAL",
+        "BINGX_DEPTH_TS_IS_MESSAGE_CONSTRUCTION_NOT_MATCHING_ENGINE"
+      ],
+      "long_symbol": "QUSDT",
+      "short_symbol": "Q-USDT",
+      "long_bid": "0.14271",
+      "long_ask": "0.14272",
+      "short_bid": "0.143413",
+      "short_ask": "0.143479",
+      "quote_source_timestamps_ms": [
+        1793048355319,
+        1793048354712
+      ],
+      "orderbook_sequences": [
+        32986875,
+        null
+      ],
+      "max_symmetric_qty_base": null,
+      "max_executable_notional_usd": null,
+      "first_seen_at_ms": 1793048327099,
+      "peak_spread_pct": 0.8853400574350354,
+      "size_checks": [
+        {
+          "size_usd": 100.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 50.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        },
+        {
+          "size_usd": 250.0,
+          "stage": "BLOCKED",
+          "qty_base": null,
+          "buy_vwap": null,
+          "sell_vwap": null,
+          "scenario_net_usd": null,
+          "round_trip_net_usd": null,
+          "rejection_codes": [
+            "ASSET_IDENTITY_UNVERIFIED"
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Only two native identity pairs reviewed, not all 449 shared labels",
+    "2 second TTL unchanged; legitimate idle level-one snapshots may arrive every 3 seconds, so incomplete fresh coverage remains",
+    "BingX intervals verified only on shortlisted symbols, others remain FUNDING_INTERVAL_UNVERIFIED",
+    "DB growth measured around 60 kB/s, insufficient Free volume for 24h; prompted next aggregation fix",
+    "No 24h acceptance, trade, extra CEX, Telegram or DEX connection"
+  ]
+}

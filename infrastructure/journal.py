@@ -61,6 +61,7 @@ class Journal:
                     event_id UUID PRIMARY KEY, observed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                     signal_id TEXT NOT NULL, payload JSONB NOT NULL);
                     CREATE INDEX IF NOT EXISTS signal_time_idx ON signal_events(observed_at);
+                    CREATE INDEX IF NOT EXISTS signal_id_time_idx ON signal_events(signal_id, observed_at);
                     CREATE TABLE IF NOT EXISTS scanner_settings (
                     key TEXT PRIMARY KEY, value JSONB NOT NULL);""")
 
@@ -101,14 +102,25 @@ class Journal:
                 break
             await asyncio.sleep(0.5)
 
-    async def history(self, limit=50):
+    async def history(self, limit=50, signal_id=None):
+        limit = min(200, max(1, limit))
         if self.pool:
             async with self.pool.acquire() as conn:
-                rows = await conn.fetch(
-                    "SELECT payload FROM signal_events ORDER BY observed_at DESC LIMIT $1", min(limit, 200)
-                )
+                if signal_id:
+                    rows = await conn.fetch(
+                        "SELECT payload FROM signal_events WHERE signal_id=$1 "
+                        "ORDER BY observed_at DESC LIMIT $2",
+                        signal_id,
+                        limit,
+                    )
+                else:
+                    rows = await conn.fetch(
+                        "SELECT payload FROM signal_events ORDER BY observed_at DESC LIMIT $1",
+                        limit,
+                    )
             return [json.loads(r["payload"]) for r in rows]
-        return list(self.recent)[-limit:][::-1]
+        rows = [r for r in self.recent if not signal_id or r["id"] == signal_id]
+        return rows[-limit:][::-1]
 
     async def close(self):
         if self.pool:

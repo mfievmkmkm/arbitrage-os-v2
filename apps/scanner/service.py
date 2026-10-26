@@ -62,6 +62,8 @@ class Scanner:
         self.depth_selected_at = {}
         self.intervals = {}
         self.last_journal = {}
+        self.rejection_windows = {}
+        self.observed_rejections = Counter()
         self.started = time.time()
 
     def revoke(self, venue, symbols, reason):
@@ -71,12 +73,67 @@ class Scanner:
             if (s.cheap == venue and s.long_symbol in symbols) or (
                 s.expensive == venue and s.short_symbol in symbols
             ):
+                self.flush_rejection_window(s.id)
                 s.stage = "BLOCKED"
                 s.expires_at_ms = min(s.expires_at_ms, now_ms)
                 if reason not in s.rejection_codes:
                     s.rejection_codes.append(reason)
                     self.rejections[reason] += 1
                     self.journal.append(asdict(s))
+
+    def flush_rejection_window(self, signal_id):
+        window = self.rejection_windows.pop(signal_id, None)
+        if not window:
+            return
+        self.journal.append(
+            {
+                **asdict(window["last"]),
+                "event_type": "REJECTED_OBSERVATION_WINDOW",
+                "aggregation": {
+                    "first_observed_at_ms": window["first_ms"],
+                    "last_observed_at_ms": window["last_ms"],
+                    "observations": window["count"],
+                    "rejection_counts": dict(window["reasons"]),
+                    "raw_spread_min_pct": window["minimum"],
+                    "raw_spread_max_pct": window["maximum"],
+                    "policy": "REPEATED_BLOCKED_UPDATES_AGGREGATED; NOT_TICK_BY_TICK_REPLAY",
+                },
+            }
+        )
+        self.rejections.update(window["reasons"].keys())
+        self.metrics["rejected_windows_written"] += 1
+        self.metrics["rejected_updates_aggregated"] += window["count"]
+
+    def record_signal(self, signal, prior):
+        self.observed_rejections.update(signal.rejection_codes)
+        if prior is None or prior.stage != signal.stage:
+            self.flush_rejection_window(signal.id)
+            self.journal.append(asdict(signal))
+            self.rejections.update(signal.rejection_codes)
+            self.last_journal[signal.id] = time.monotonic()
+        elif signal.stage == "BLOCKED":
+            window = self.rejection_windows.setdefault(
+                signal.id,
+                {
+                    "began": time.monotonic(),
+                    "first_ms": signal.observed_at_ms,
+                    "minimum": signal.raw_spread_pct,
+                    "maximum": signal.raw_spread_pct,
+                    "count": 0,
+                    "reasons": Counter(),
+                },
+            )
+            window["last"] = signal
+            window["last_ms"] = signal.observed_at_ms
+            window["count"] += 1
+            window["reasons"].update(signal.rejection_codes)
+            window["minimum"] = min(window["minimum"], signal.raw_spread_pct)
+            window["maximum"] = max(window["maximum"], signal.raw_spread_pct)
+            if time.monotonic() - window["began"] >= 10:
+                self.flush_rejection_window(signal.id)
+        elif time.monotonic() - self.last_journal.get(signal.id, 0) >= 10:
+            self.journal.append(asdict(signal))
+            self.last_journal[signal.id] = time.monotonic()
 
     async def emit(
         self,
@@ -160,6 +217,7 @@ class Scanner:
                     sid = f"A1:{a.venue}:{a.symbol}:{b.venue}:{b.symbol}"
                     if raw < self.cfg.min_spread_pct:
                         if sid in self.signals:
+                            self.flush_rejection_window(sid)
                             old_signal = self.signals.pop(sid)
                             old_signal.stage = "EXPIRED"
                             self.journal.append(asdict(old_signal))
@@ -187,12 +245,7 @@ class Scanner:
                         self.metrics["raw_discoveries"] += 1
                     if s.stage == "VERIFIED":
                         self.metrics["verified_updates"] += 1
-                    fingerprint = (s.stage, tuple(s.rejection_codes))
-                    previous = self.last_journal.get(s.id)
-                    if previous is None or previous[0] != fingerprint or time.monotonic() - previous[1] > 10:
-                        self.rejections.update(s.rejection_codes)
-                        self.journal.append(asdict(s))
-                        self.last_journal[s.id] = fingerprint, time.monotonic()
+                    self.record_signal(s, prior)
             elapsed = (time.monotonic() - received) * 1000
             self.latencies.append(elapsed)
             if compared:
@@ -443,10 +496,14 @@ class Scanner:
                 )
             for sid, s in list(self.signals.items()):
                 if s.expires_at_ms <= now_ms:
+                    self.flush_rejection_window(sid)
                     s.stage = "EXPIRED"
                     self.journal.append(asdict(s))
                     del self.signals[sid]
                     self.last_journal.pop(sid, None)
+            for sid, window in list(self.rejection_windows.items()):
+                if time.monotonic() - window["began"] >= 10:
+                    self.flush_rejection_window(sid)
             await asyncio.sleep(3)
 
     def status(self):
@@ -538,6 +595,7 @@ class Scanner:
             "queue_depth": self.queue.qsize(),
             "metrics": dict(self.metrics),
             "rejections_journal_events": dict(self.rejections),
+            "rejections_evaluated_updates": dict(self.observed_rejections),
             "journal": {
                 "durable": bool(self.journal.pool),
                 "written": self.journal.written,
@@ -548,6 +606,7 @@ class Scanner:
                 "storage": self.journal.storage,
                 "healthy": bool(self.journal.pool) and self.journal.last_write_error is None,
                 "last_write_error": self.journal.last_write_error,
+                "pending_rejection_windows": len(self.rejection_windows),
             },
             "readiness": "OBSERVATION_ONLY"
             if len(coverage) == 2 and all(coverage[v]["fresh_quotes"] for v in coverage)
@@ -594,9 +653,28 @@ class Scanner:
         self.tasks.append(asyncio.create_task(self.funding_interval_loop()))
         self.tasks.append(asyncio.create_task(self.clock_loop()))
         self.tasks.append(asyncio.create_task(self.journal.monitor_storage(self.stop)))
+        self.tasks.append(asyncio.create_task(self.observation_loop()))
         self.tasks += [asyncio.create_task(self.catalogs(v)) for v in self.cfg.venues]
 
+    async def observation_loop(self):
+        while not self.stop.is_set():
+            self.journal.append(
+                {
+                    "id": "INFRA:observation-health",
+                    "event_type": "OBSERVATION_HEALTH",
+                    "observed_at_ms": int(time.time() * 1000),
+                    "stage": "OBSERVE",
+                    "snapshot": self.status(),
+                }
+            )
+            try:
+                await asyncio.wait_for(self.stop.wait(), 600)
+            except TimeoutError:
+                pass
+
     async def close(self):
+        for sid in list(self.rejection_windows):
+            self.flush_rejection_window(sid)
         self.stop.set()
         tasks = self.tasks + [t for _, ts in self.feed_tasks.values() for t in ts]
         tasks += list(self.depth_tasks.values())
@@ -608,4 +686,6 @@ class Scanner:
         await asyncio.gather(*(t for t in tasks if t is not journal_task), return_exceptions=True)
         if journal_task:
             await journal_task
+            if not self.journal.queue.empty():
+                await self.journal.run(self.stop)
         await self.journal.close()
