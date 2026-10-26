@@ -248,3 +248,49 @@ async def test_health_history_query_is_scoped_and_parameterized():
         response = await client.get("/history?signal_id=INFRA:observation-health&limit=200")
         assert [r["id"] for r in await response.json()] == ["INFRA:observation-health"]
         assert (await client.get("/history?limit=not-a-number")).status == 400
+
+
+@pytest.mark.asyncio
+async def test_stale_comparisons_do_not_invent_repeated_discoveries_or_economic_closures():
+    scanner = Scanner()
+    a, b = instrument(asset_id=None), instrument("bingx", asset_id=None)
+    scanner.instruments = {a.key: a, b.key: b}
+    scanner.by_base[a.base] = [a, b]
+    qa, qb, _, _, _ = market()
+    scanner.quotes[a.key] = qa
+    scanner.quotes[b.key] = qb
+    consumer = asyncio.create_task(scanner.consume())
+    try:
+        await scanner.emit(*b.key, qb, None, None, time.monotonic())
+        await asyncio.wait_for(scanner.queue.join(), 1)
+        assert scanner.metrics["raw_discoveries"] == 1
+        # The distant venue becomes stale; a below-filter number is not proof the spread closed.
+        qa.source_ms -= 10000
+        low = replace(qb, bid=qa.ask, ask=qa.ask + D(1))
+        await scanner.emit(*b.key, low, None, None, time.monotonic())
+        await asyncio.wait_for(scanner.queue.join(), 1)
+        assert len(scanner.signals) == 1
+        assert scanner.status()["raw_current"] == 0
+        assert scanner.metrics["raw_discoveries"] == 1
+        signal = next(iter(scanner.signals.values()))
+        assert Reason.STALE in signal.rejection_codes and signal.stage == "BLOCKED"
+    finally:
+        consumer.cancel()
+        await asyncio.gather(consumer, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+async def test_observation_health_log_never_contains_environment_secret_values(monkeypatch, capsys):
+    monkeypatch.setenv("CONTROL_TOKEN", "FIXTURE_ONLY_CONTROL_VALUE")
+    monkeypatch.setenv("DATABASE_URL", "FIXTURE_ONLY_DATABASE_VALUE")
+    scanner = Scanner()
+    task = asyncio.create_task(scanner.observation_loop())
+    await asyncio.sleep(0.01)
+    scanner.stop.set()
+    await task
+    output = capsys.readouterr().out
+    assert "FIXTURE_ONLY" not in output
+    report = json.loads(output)
+    assert report["event_type"] == "OBSERVATION_HEALTH"
+    assert report["asset"] == "INFRA" and report["rejection_codes"] == []
+    assert scanner.journal.recent[-1]["id"] == "INFRA:observation-health"

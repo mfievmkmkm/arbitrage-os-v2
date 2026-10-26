@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import time
 from collections import Counter, defaultdict, deque
@@ -215,7 +216,11 @@ class Scanner:
                     compared = True
                     raw = (qb.bid / qa.ask - 1) * 100
                     sid = f"A1:{a.venue}:{a.symbol}:{b.venue}:{b.symbol}"
-                    if raw < self.cfg.min_spread_pct:
+                    quotes_fresh = all(
+                        fresh(q.source_ms, q.received, self.cfg, int(time.time() * 1000), time.monotonic())
+                        for q in (qa, qb)
+                    )
+                    if raw < self.cfg.min_spread_pct and (quotes_fresh or sid not in self.signals):
                         if sid in self.signals:
                             self.flush_rejection_window(sid)
                             old_signal = self.signals.pop(sid)
@@ -495,7 +500,12 @@ class Scanner:
                     )
                 )
             for sid, s in list(self.signals.items()):
-                if s.expires_at_ms <= now_ms:
+                # TTL hides stale candidates from API/status immediately. Keep their bounded
+                # internal state during a feed gap so every subsequent quote on the other
+                # venue does not invent a new discovery/start/end cycle. Freshness refusals
+                # are still counted in rejection windows. Terminal on inactivity or an
+                # actually fresh spread below the filter, not a stale comparison.
+                if s.expires_at_ms <= now_ms and now_ms - s.observed_at_ms > 60000:
                     self.flush_rejection_window(sid)
                     s.stage = "EXPIRED"
                     self.journal.append(asdict(s))
@@ -530,7 +540,12 @@ class Scanner:
                 "identified": identified,
                 "fresh_quotes": count,
                 "received_quotes": sum(k[0] == v for k in self.quotes),
-                "symbol_counterparts_unverified": counterpart,
+                "symbol_counterparts_total": counterpart,
+                "symbol_counterparts_unverified": sum(
+                    any(y.venue != v for y in self.by_base[x.base])
+                    and not any(compatible(x, y) for y in self.by_base[x.base])
+                    for x in instruments
+                ),
                 "no_counterpart": len(instruments) - counterpart,
                 "quote_sources": dict(Counter(q.source for k, q in self.quotes.items() if k[0] == v)),
                 "funding_received": sum(x.key in self.funding for x in instruments),
@@ -657,18 +672,24 @@ class Scanner:
         self.tasks += [asyncio.create_task(self.catalogs(v)) for v in self.cfg.venues]
 
     async def observation_loop(self):
+        iteration = 0
         while not self.stop.is_set():
-            self.journal.append(
-                {
-                    "id": "INFRA:observation-health",
-                    "event_type": "OBSERVATION_HEALTH",
-                    "observed_at_ms": int(time.time() * 1000),
-                    "stage": "OBSERVE",
-                    "snapshot": self.status(),
-                }
-            )
+            report = {
+                "id": "INFRA:observation-health",
+                "asset": "INFRA",
+                "rejection_codes": [],
+                "event_type": "OBSERVATION_HEALTH",
+                "stage": "OBSERVE",
+                "observed_at_ms": int(time.time() * 1000),
+                "snapshot": self.status(),
+            }
+            if iteration % 10 == 0:
+                self.journal.append(report)
+            # Public-market diagnostics only: no environment, DSN or credential values.
+            print(json.dumps(report, ensure_ascii=False), flush=True)
+            iteration += 1
             try:
-                await asyncio.wait_for(self.stop.wait(), 600)
+                await asyncio.wait_for(self.stop.wait(), 60)
             except TimeoutError:
                 pass
 

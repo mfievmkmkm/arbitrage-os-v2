@@ -116,3 +116,14 @@
 42. Фактическое суточное наблюдение проверяется по durable OBSERVATION_HEALTH snapshots каждые
     600 s, выборка по signal_id параметризована и indexed. Наличие этого механизма не означает,
     что уже накоплены сутки, полного coverage или что free credit/volume точно хватит.
+
+43. Реальное наблюдение a574859 показало, что aggregation одного repeated fingerprint недостаточно:
+    TTL создавал искусственные повторные discovery/end циклы для raw candidates, когда одна
+    котировка устарела. Внутренний bounded cache теперь переживает gap, при этом API/status
+    по-прежнему немедленно скрывают запись после TTL. Fresh spread ниже фильтра либо 60 s без
+    новых сравнений завершает episode. Stale comparison не доказывает экономическое закрытие.
+    Все отказы сохраняются в windows; VERIFIED TTL и исполнимость не ослабляются.
+44. OBSERVATION_HEALTH дополнительно печатается в stdout раз в 60 s для независимого чтения
+    через Railway logs, в Postgres остаётся каждые 600 s. Отчёт содержит только public market
+    metrics, без environment values/DSN/credentials. Поля asset/rejection_codes сохраняют
+    совместимость с Telegram history renderer.
