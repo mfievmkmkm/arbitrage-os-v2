@@ -2,7 +2,65 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
-## Подготовка Railway · 27.10.2026 — блокер тарифа
+## Текущий Railway результат · 27.10.2026 · 01:41 Екатеринбург
+
+После явного разрешения владельца удалены два старых сервиса и их два диска; удаление с 2FA
+применено владельцем в dashboard и подтверждено read-back (0 services/volumes/pending).
+Create нового project всё ещё отклоняется Free-limit, но create-service в очищенном
+`humble-success` успешен. Платный тариф/платёж не включались.
+
+**Scanner и приватный Postgres: SUCCESS, по одной running replica.** Runtime f5fc31b,
+новый persistent volume 500 MB, /health=200. /ready=true означает только техническую
+готовность OBSERVATION_ONLY + durable journal, не принятие 1A.
+
+Доступ: https://arbitrage-os-v2-scanner-production.up.railway.app/status
+Evidence: [railway-2026-10-27.json](evidence/railway-2026-10-27.json).
+
+**Bybit REST и WS работают в этой фактической среде** на прежнем регионе workloads
+`europe-west4-drams3a`. Используются официальные endpoints; прокси, альтернативных доменов,
+ротации регионов и третьих CEX нет. Это не меняет доказанный country-block GitHub runner.
+
+| Снимок после restart, uptime 190 s | Bybit | BingX |
+|---|---:|---:|
+| Записей каталога | 919 | 1294 |
+| Активных контрактов | 811 | 996 |
+| Исключено status/type/maintenance/launch | 108 | 298 |
+| Получены bid/ask | 811 | 996 |
+| Свежие по TTL в этом снимке | 242 | 996 |
+| Возраст quotes p95 | 185702 ms | 766 ms |
+| Свежих shortlist depth books | 9 | 5 |
+
+449 совпадений base labels — **не подтверждённые пары**: identity registry пуст, совместимых
+пар 0 подтверждено. 532781 quote events, 610976 directed comparisons/prechecks, 45345 candidate
+updates, 1170 raw discoveries с повторными обнаружениями (не уникальные возможности).
+RAW current=9, VERIFIED=0, EXECUTABLE=0, PAPER/LIVE orders=0.
+
+Обработка WS p50=0.0507 ms/p95=0.3978 ms; сравнения/prechecks p50=0.0616 ms/p95=0.5007 ms,
+окно последних 20000 событий. Это внутренняя задержка, не RTT и не время до исполнимой сделки.
+Quote p95 Bybit включает давно не обновлённые bid/ask: эти записи не считаются свежими и
+не получают ложного timestamp от heartbeat/funding. Полнота свежих данных ещё недостаточна.
+RSS=141836288 bytes (~135.3 MiB), CPU=76.396 s/190 s, queue=1, journal dropped=0/failures=0.
+Postgres persisted=4966 в текущем процессе; pending=3, это не общий row count всей БД.
+
+Отказы (journal events, категории пересекаются): ASSET_IDENTITY_UNVERIFIED=3614,
+FUNDING_UNAVAILABLE=2995, QUOTE_TIMESTAMP_SKEW=2180, ORDERBOOK_UNAVAILABLE=1923,
+QUOTE_STALE=1334, ORDERBOOK_TIMESTAMP_SKEW=839, DATA_PROVIDER_OUTAGE=210.
+Последний счётчик включает отзывы при изменении depth subscriptions, не доказывает 210
+аварий broad-feed. Нужна дальнейшая детализация churn и полноты funding.
+
+После restart только scanner /history вернул 12 записей старше нового CONFIG:BOOT.
+История процесса сохранена в Postgres. Cloud DB restart не выполнялся; CI DB restart
+проверялся отдельно. Free даёт $1/month usage и 500 MB volume, непрерывный месяц и достаточная
+ёмкость истории этим не гарантируются. Автоочистка истории не настроена.
+
+**Gate 1A не принят. Следующий шаг:** доказательный identity registry; полнота fresh bid/ask,
+funding и стаканов; устранение причин реальных отказов; контроль роста БД/потребления credit;
+затем ≥24h наблюдения с обоими потоками. После 1A обязателен 1B: Spot Bybit/BingX и DEX
+BNB Chain, Base, Arbitrum. Telegram не подключён, торговые ключи/ордера запрещены.
+
+Далее приведены исторические результаты предыдущих сред и первоначальные планы.
+
+## Исторически: первоначальный блокер создания проекта
 
 Railway подключён, список проектов проверен. Создание отдельного project `arbitrage-os-v2`
 отклонено платформой: **Free plan resource provision limit exceeded**. Повторная проверка:
@@ -190,7 +248,7 @@ GZIP/Ping, disconnect → invalidate → reconnect → повторный subscr
 | Установка локального Postgres | Не выполнена: apt завершился ошибками setgroups/setegid/seteuid sandbox |
 | Postgres migration / DB restart smoke CI | PASS в GitHub CI |
 | Real Telegram | NOT_CONNECTED: token/owner ID не заданы |
-| Cloud deployment | NOT_DEPLOYED, платные сервисы не создавались |
+| Cloud deployment | SUCCESS на Free; см. текущий Railway результат в начале документа |
 | Наблюдение ≥24 h на двух биржах | НЕ ВЫПОЛНЕНО |
 
 CI теперь содержит Linux/Windows, secrets history scan, реальный Postgres service и отдельный
@@ -198,7 +256,7 @@ Docker/compose job с проверкой сохранённого INTEGRATION_TE
 Manual read-only workflow сохраняет independent network diagnostics и market observation artifact.
 Ephemeral CI credentials генерируются и маскируются; не являются торговыми ключами.
 
-## Следующий конкретный шаг
+## Исторически: шаг перед первоначальной публикацией
 
 Опубликовать поставленный bundle обычным Windows Git push (команды в README), сохранив исходные
 SHA. Затем проверить запустившийся CI и независимый public observation workflow. Для принятия

@@ -1,21 +1,24 @@
 {
   "schema_version": 1,
-  "kind": "REVIEWABLE_DEPLOYMENT_PLAN_NOT_APPLIED",
+  "kind": "APPLIED_DEPLOYMENT_RECORD",
   "requirements_version": "1.3",
-  "project_name": "arbitrage-os-v2",
+  "project_name": "humble-success",
   "environment_name": "production",
-  "status": "BLOCKED_BY_RAILWAY_FREE_PLAN_RESOURCE_LIMIT",
-  "project_id": null,
-  "deployment_id": null,
+  "status": "DEPLOYED_OBSERVE_NOT_GATE_1A_ACCEPTED",
+  "project_id": "1c5a59ed-07e6-4cd1-abf9-c6bb308313ed",
+  "deployment_id": "20251bb2-7ab4-4a7f-b25d-fe9b6ae44b55",
   "repo": "mfievmkmkm/arbitrage-os-v2",
   "runtime_commit": "f5fc31b4927d3366a03a76d06df105f317db11f9",
   "mode": "OBSERVE",
-  "enabled_cex_venues": ["bybit", "bingx"],
+  "enabled_cex_venues": [
+    "bybit",
+    "bingx"
+  ],
   "live_enabled": false,
   "region_proposal": "europe-west4-drams3a",
-  "region_policy": "Same region as existing workspace workloads; verify official public endpoint access. Never rotate proxies, alternate domains or regions to evade restrictions.",
+  "region_policy": "Existing workload region retained. Actual official Bybit/BingX REST and WS received. No proxies, alternate endpoints or geographic rotation.",
   "scanner": {
-    "name": "scanner",
+    "name": "arbitrage-os-v2-scanner",
     "source": "github_repository_pinned_commit",
     "dockerfile": "Dockerfile",
     "start_command": "python -m apps.scanner.main",
@@ -25,7 +28,10 @@
     "restart_max_retries": 10,
     "replicas": 1,
     "sleep_application": false,
-    "limits": {"vCPUs": 0.75, "memoryGB": 0.5},
+    "limits": {
+      "vCPUs": 0.75,
+      "memoryGB": 0.5
+    },
     "variables": {
       "MODE": "OBSERVE",
       "ENABLED_CEX_VENUES": "bybit,bingx",
@@ -35,37 +41,58 @@
       "MAX_SLIPPAGE_BPS": "50",
       "DATABASE_URL": "${{Postgres.DATABASE_URL}}"
     },
-    "secret_fields_to_generate_at_deploy": ["CONTROL_TOKEN"],
-    "public_domain": "Only scanner HTTP status; DB remains private",
+    "secret_fields_to_generate_at_deploy": [
+      "CONTROL_TOKEN"
+    ],
+    "public_domain": "https://arbitrage-os-v2-scanner-production.up.railway.app",
     "private_api_keys": "NOT_ACCEPTED",
-    "telegram": "NOT_ENABLED_WITHOUT_OWNER_TOKEN_AND_ID"
+    "telegram": "NOT_ENABLED_WITHOUT_OWNER_TOKEN_AND_ID",
+    "service_id": "9ac1d37d-97b0-43cd-86a4-5f1039bfcc05",
+    "deployment_status": "SUCCESS"
   },
   "postgres": {
     "name": "Postgres",
     "image": "postgres:16-alpine",
     "replicas": 1,
-    "limits": {"vCPUs": 0.25, "memoryGB": 0.25},
-    "volume": {"sizeMB": 2048, "mount_path": "/var/lib/postgresql/data"},
+    "limits": {
+      "vCPUs": 0.25,
+      "memoryGB": 0.25
+    },
+    "volume": {
+      "sizeMB": 500,
+      "mount_path": "/var/lib/postgresql/data",
+      "volume_id": "b8df4c00-334c-4424-854e-86c789e30269"
+    },
     "variables": {
       "POSTGRES_DB": "arbitrage",
       "POSTGRES_USER": "scanner",
       "PGDATA": "/var/lib/postgresql/data/pgdata"
     },
-    "secret_fields_to_generate_at_deploy": ["POSTGRES_PASSWORD"],
+    "secret_fields_to_generate_at_deploy": [
+      "POSTGRES_PASSWORD"
+    ],
     "database_url_setup": "Generate private DSN from protected Postgres variables after provisioning; store in service DATABASE_URL. Never publish the resulting value.",
     "public_tcp_proxy": false,
-    "reuse_old_database": false
+    "reuse_old_database": false,
+    "service_id": "480b4cd7-caaf-4416-bd60-8f6150b37b5e",
+    "deployment_id": "cd653bd9-12f8-4b8b-9f65-e44cddca756d",
+    "deployment_status": "SUCCESS"
   },
   "pricing_checked_on": "2026-10-27",
   "pricing_source": "https://docs.railway.com/pricing/plans",
-  "pricing_usd_per_month": {"ram_per_gb": 10, "cpu_per_vcpu": 20, "storage_per_gb": 0.15, "egress_per_gb": 0.05},
+  "pricing_usd_per_month": {
+    "ram_per_gb": 10,
+    "cpu_per_vcpu": 20,
+    "storage_per_gb": 0.15,
+    "egress_per_gb": 0.05
+  },
   "hobby_base_usd_month": 5,
   "hobby_included_usage_usd_month": 5,
-  "cpu_ram_storage_at_continuous_resource_caps_usd_month_approx": 27.8,
+  "cpu_ram_storage_at_continuous_resource_caps_usd_month_approx": 27.575,
   "network_egress_extra": true,
   "billing_hard_limit_is_configured": false,
-  "billing_note": "Resource caps are not a billing hard limit. Included plan usage offsets resource spend. Existing workspace costs and egress are not included in this estimate.",
-  "requires_owner_paid_plan_and_budget_authorization": true,
+  "billing_note": "Free tier only, no payment or upgrade authorized/performed. Free included usage does not guarantee uninterrupted monthly operation; resource caps are not a billing limit. Any paid subscription requires separate owner approval.",
+  "requires_owner_paid_plan_and_budget_authorization": false,
   "verification_after_deploy": [
     "Terminal deployment SUCCESS and process /health",
     "Official Bybit/BingX REST+WS availability without access-control bypass",
@@ -73,5 +100,11 @@
     "Durable Postgres event, restart, unchanged history",
     "WS reconnect and stale-data fail-closed",
     "At least 24 hours observation before Gate 1A acceptance"
-  ]
+  ],
+  "environment_id": "53631b57-deb4-40bd-8b75-827777c27d5b",
+  "region": "europe-west4-drams3a",
+  "plan": "Free",
+  "free_monthly_included_usage_usd": 1,
+  "paid_upgrade_performed": false,
+  "history_capacity_note": "500 MB is the Free plan limit; retention capacity/usage not yet measured. No automatic deletion of journal history configured. Not evidence of 24-hour storage capacity."
 }

@@ -31,7 +31,7 @@ GitHub workflow `Public market observation (read-only)` позволяет по�
 а не доказательство несуществования инструмента.
 
 
-## Подготовленная конфигурация Railway · 27.10.2026
+## Исторически: первоначально предложенная конфигурация Railway
 
 План: `configs/deployment/railway-observe-plan.json`. Это описание для операций через Railway MCP,
 а не автоматически применяемый railway.json/terraform import. Новые legacy railway.json не
@@ -61,3 +61,30 @@ storage $0.15/GB/month, egress $0.05/GB. При непрерывном испо�
 Апгрейд, платежи, accept-deploy и provisioning без такого разрешения не выполнялись.
 После согласования agent создаёт отдельный project, stage services/source/env/volume,
 сверяет весь patch, затем запускает уже разрешённое развёртывание и проверяет фактический результат.
+
+
+## Применённый запуск на Free · 27.10.2026
+
+Первоначальный план выше заменён конфигурацией APPLIED_DEPLOYMENT_RECORD в
+`configs/deployment/railway-observe-plan.json`. После разрешённого удаления старых services и
+volumes используем очищенный `humble-success` / production. Пустые projects сохранены; попытка
+нового project всё ещё отклоняется, а создание services внутри существующего прошло успешно.
+
+Scanner и Postgres: terminal SUCCESS, одна running replica каждого. Scanner root Dockerfile,
+commit f5fc31b, /health; DB postgres:16-alpine, private postgres hostname, без public domain/TCP.
+Limits scanner 0.75 vCPU/0.5 GB; DB 0.25 vCPU/0.25 GB; новый persistent volume 500 MB.
+Сгенерированы CONTROL_TOKEN и POSTGRES_PASSWORD; значения не публикуются. Telegram не подключён.
+
+Проверены /health, /ready, /status, /markets, /quotes, /signals, /history. Реальные каталоги и
+потоки обеих бирж получены. История старого процесса доступна после restart scanner. DB в облаке
+не перезапускалась. Evidence: `docs/evidence/railway-2026-10-27.json`.
+
+Free включает $1 usage/month по официальным docs; подписка не повышалась, платёж не выполнялся.
+Нет обещания беспрерывного месяца: это зависит от остатка credit и реального расхода. 500 MB
+не являются доказательством ёмкости на 24 часа: отдельно нужны контроль заполнения/роста БД и
+согласование увеличения, если потребуется. Автоматическое стирание истории не включалось.
+Любой переход на платный план всё ещё требует отдельного согласования владельцем.
+
+Следующий блокер 1A: evidence-backed identity registry, полнота/свежесть обоих потоков, покрытие
+funding/depth, восстановление WS и ≥24h фактического наблюдения. /ready=true обозначает лишь
+техническое OBSERVATION_ONLY + подключённый durable journal, не приёмку Gate 1A. Затем обязателен 1B.

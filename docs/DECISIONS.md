@@ -70,3 +70,22 @@
 29. Legacy railway.json не добавляется: свежие официальные docs рекомендуют Infrastructure as Code;
     подготовленный JSON явно не объявляется нативным IaC-файлом. При наличии доступа будет
     применяться через staged MCP mutations и проверяться describe/get-staged-changes.
+
+
+## Railway после очистки владельцем · 27.10.2026
+
+30. Владелец явно разрешил удалить оба старых сервиса и их два диска. Изменения staged через MCP;
+    accept-deploy отклонён Railway из-за обязательной 2FA в dashboard. Владелец применил удаление
+    на сайте; read-back подтвердил 0 services, 0 volumes, 0 pending work. GitHub repos сохранены.
+31. Создание нового project по-прежнему отклонено Free-limit. Создание пустого scanner service
+    в уже существующем humble-success успешно. Используем этот очищенный project, без upgrade,
+    оплаты или регистрации нового аккаунта. Это заменяет первоначальный план отдельного project.
+32. Новый scanner и приватный Postgres развернуты из проверенного runtime f5fc31b; оба SUCCESS.
+    Volume уменьшен с предложенных 2 GB до допустимых Free 500 MB. Секреты сгенерированы при
+    развёртывании, находятся только в protected variables, в Git их значений нет. Trading keys нет.
+33. Реальные Bybit REST/WS и BingX REST/WS получены в постоянном регионе прежних workloads.
+    Это наблюдение другой среды, а не обход блокировки GitHub runner. Identity registry остаётся
+    пустым; совпадение 449 base labels не объявляется совместимыми/исполнимыми контрактами.
+34. После restart только scanner API /history вернул записи старше нового CONFIG:BOOT. Это
+    доказательство сохранности истории процесса в Postgres, но не cloud DB restart test или ≥24h.
+    Free кредит и 500 MB не гарантируют круглосуточный месяц или достаточную ёмкость истории.
