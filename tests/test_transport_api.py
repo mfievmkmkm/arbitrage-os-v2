@@ -282,3 +282,30 @@ async def test_websocket_disconnect_resubscribes_and_resets(monkeypatch):
         assert len(calls) == 2 and calls[0]["dataType"] == calls[1]["dataType"]
         assert events[:3] == ["quote", "invalidated", "quote"]
         assert metrics["ws_reconnects"] >= 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body,expected",
+    [
+        (
+            "The Amazon CloudFront distribution is configured to block access from your country",
+            "PUBLIC_API_REGION_RESTRICTED",
+        ),
+        ("Forbidden", "HTTP_403"),
+    ],
+)
+async def test_country_restriction_requires_explicit_provider_evidence(monkeypatch, body, expected):
+    async def handler(request):
+        return web.Response(status=403, text=body)
+
+    app = web.Application()
+    app.router.add_get("/v5/market/time", handler)
+    async with TestServer(app) as server, ClientSession() as session:
+        monkeypatch.setitem(public.REST, "bybit", str(server.make_url("")).rstrip("/"))
+        http = public.PublicHTTP(session, "bybit", Counter())
+        with pytest.raises(public.ProviderError) as caught:
+            await http.get("/v5/market/time")
+        assert caught.value.code == expected
+        assert caught.value.evidence["http_status"] == 403
+        assert "body_sha256" in caught.value.evidence

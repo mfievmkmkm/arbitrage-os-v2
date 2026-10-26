@@ -47,7 +47,17 @@ class PublicHTTP:
                     await asyncio.sleep(retry)
                     raise ProviderError("HTTP_429")
                 if r.status != 200:
-                    raise ProviderError(f"HTTP_{r.status}")
+                    body = await r.content.read(4096)
+                    evidence = {
+                        "http_status": r.status,
+                        "content_type": r.headers.get("Content-Type"),
+                        "body_sha256": hashlib.sha256(body).hexdigest(),
+                        "body_bytes_sampled": len(body),
+                    }
+                    if r.status == 403 and b"block access from your country" in body.lower():
+                        evidence["diagnosis"] = "EXPLICIT_COUNTRY_ACCESS_RESTRICTION"
+                        raise ProviderError("PUBLIC_API_REGION_RESTRICTED", evidence)
+                    raise ProviderError(f"HTTP_{r.status}", evidence)
                 # An HTML access-denial page can have status 200. Never call it an empty catalog.
                 if "text/html" in r.headers.get("Content-Type", "").lower():
                     body = await r.content.read(4096)

@@ -2,20 +2,64 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Последний результат: GitHub runner · 27.10.2026
+
+Запущено агентом, без ручного Run workflow владельцем. Коммит запуска `1e31fae`,
+[наблюдение 40390030000](https://github.com/mfievmkmkm/arbitrage-os-v2/actions/runs/40390030000).
+Workflow автоматически запускает ограниченный OBSERVE при обновлении собственного файла;
+manual workflow_dispatch сохранён, права contents:read, default 180 s.
+
+**Bybit REST: точная наблюдаемая причина отказа этого runner — блокировка страны IP.**
+HTTP 403 CloudFront прямо сообщает, что доступ из страны заблокирован. Это другая наблюдаемая
+среда по сравнению с предыдущей HTML-заглушкой через перехватываемый TLS внутри Work.
+Выводы из одной среды не выдаются за доказательство поведения другой.
+
+**Bybit public WS доступен:** независимый probe получил реальный `tickers.BTCUSDT` snapshot.
+Он не использован как вымышленный полный каталог. Основной scanner без реального REST каталога
+остаётся UNAVAILABLE по Bybit; число совместимых пар определить невозможно.
+
+BingX: 1294 discovered, 1227 active/fresh, 67 exclusions, **521102 quote events**, 1069 Ping/Pong,
+31 WS connections, quote age p95 739 ms. Обработка p50 0.0706 ms / p95 **0.1686 ms**,
+последние 20000 событий; queue depth 0, RSS 62263296 bytes (~59.38 MiB).
+Межбиржевой p95 НЕ ИЗМЕРЕН. RAW/VERIFIED/EXECUTABLE=0/0/0; PAPER=0/0, LIVE OFF.
+Это не доказательство отсутствия рыночных возможностей.
+
+Полный JSON каталог/quotes хранится в Actions artifact `public-observation-evidence`, ID 12682816097.
+В Git сохранены status, network diagnostics, все 1227 instrument IDs и sample quotes:
+[evidence/github-40390030000-summary.json](evidence/github-40390030000-summary.json).
+История этого observation NON-DURABLE: persisted=0, PostgreSQL в этом job не подключался.
+
+CI Windows/Linux/secrets/lint/Postgres/Docker прошёл для `a125d4b` (40388444274) и `1e31fae`
+(40390030410); в Docker log подтверждены postgres_restart_persistence=true и journal_durable=true.
+Это доказательство CI smoke, не круглосуточного production deployment.
+
+По факту ответа добавлен `PUBLIC_API_REGION_RESTRICTED` с HTTP metadata/hash и русским объяснением.
+Обычный 403 без явного сообщения о стране остаётся HTTP_403. Два отдельных HTTP regression tests
+проверяют различие. Убрана неверная универсальная формулировка про TLS interception из диагностического
+скрипта: TLS/географию выводим только из наблюдаемых доказательств.
+
+**Gate 1A не принят:** нужен разрешённый runtime с доступными REST и WS обеих бирж,
+доказательный identity registry и ≥24 h observation. Платный deployment не создавался,
+альтернативные домены/прокси/третьи CEX не использовались. Stage 1B остаётся обязательным.
+
+Следующий шаг: проверка доступности официальных endpoints в согласованной разрешённой среде
+будущего постоянного размещения. Нельзя исправить региональный запрет снятием экономических
+проверок или фиктивным каталогом.
+
 ## GitHub и сохранность истории
 
-Repository: https://github.com/mfievmkmkm/arbitrage-os-v2 — создан владельцем, PUBLIC, при проверке пустой.
+Repository: https://github.com/mfievmkmkm/arbitrage-os-v2 — PUBLIC, код опубликован владельцем обычным push.
 GitHub connector показывает push/admin permissions. Прямой `git push -u origin main` из командной
 среды завершился `could not read Username for 'https://github.com': terminal prompts disabled`.
 
-**Публикация не выполнена.** Доступный connector create_commit не позволяет указать исходные
+**Первичная публикация выполнена, исходные SHA сохранены.** Ограничение connector при первоначальном переносе: он не позволяет указать исходные
 commit metadata и сохранить их SHA; пересоздавать историю ради публикации запрещено владельцем.
 Коммиты `dc7a92e1fb23a9007b35b30c9bdd5e1b24f881b5` и
 `f8db3be24a9b4ee2050ea8c8573404e2c3159ff8` не изменены и остаются предками новых коммитов.
 Force push, amend, rebase, orphan не выполнялись. Новый репозиторий/проект не создавался.
 
 Архив содержит полный git bundle и исходники. Точные Windows CMD команды — README и
-`scripts/publish_windows.cmd`. GitHub Actions остаются NOT_RUN до успешного обычного push.
+`scripts/publish_windows.cmd`. GitHub CI run 40388444274 прошёл: Windows/Linux, secrets/lint, PostgreSQL и Docker/compose restart persistence. Повторный CI 40390030410 на коммите 1e31fae также прошёл.
 
 ## Проверка секретов
 
@@ -124,11 +168,11 @@ GZIP/Ping, disconnect → invalidate → reconnect → повторный subscr
 | Проверка | Фактический статус |
 |---|---|
 | Linux tests/lint | PASS локально |
-| Windows tests / GitHub Actions | NOT_RUN: публикация блокирована git authentication |
-| Реальный PostgreSQL restart test | SKIPPED: TEST_DATABASE_URL отсутствует |
-| Docker build / compose | NOT_RUN: Docker отсутствует |
+| Windows tests / GitHub Actions | PASS: run 40388444274 и повтор 40390030410 |
+| Реальный PostgreSQL restart test | PASS в GitHub CI; локальный тест без TEST_DATABASE_URL пропущен |
+| Docker build / compose | PASS в GitHub CI: сохранность записи после restart подтверждена |
 | Установка локального Postgres | Не выполнена: apt завершился ошибками setgroups/setegid/seteuid sandbox |
-| Postgres migration / DB restart smoke CI | Реализованы jobs/scripts, ещё NOT_RUN |
+| Postgres migration / DB restart smoke CI | PASS в GitHub CI |
 | Real Telegram | NOT_CONNECTED: token/owner ID не заданы |
 | Cloud deployment | NOT_DEPLOYED, платные сервисы не создавались |
 | Наблюдение ≥24 h на двух биржах | НЕ ВЫПОЛНЕНО |

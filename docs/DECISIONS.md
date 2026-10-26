@@ -45,3 +45,16 @@
 23. Подготовлены отдельные GitHub jobs для настоящего Docker/compose/Postgres restart smoke и manual
     public observation. До push это NOT_RUN. Локально Docker/Postgres отсутствуют; apt не смог понизить
     UID/GID в sandbox, установка прекращена. Никакие права/региональные ограничения не обходились.
+
+
+## Автономный запуск проверки · 27.10.2026
+
+24. В GitHub connector нет workflow_dispatch write tool. Вместо действий владельца добавлен scoped
+    push trigger только для .github/workflows/observe.yml, default 180 seconds, read-only permissions.
+    Первичный перенос всех исходных commits выполнен владельцем без переписывания; дальнейшие
+    изменения публикуются обычными новыми дочерними commits через connector.
+25. CI прошёл Windows/Linux/Postgres/Docker. Agent самостоятельно запустил и прочитал observation
+    40390030000. Bybit REST ответил явным country restriction 403, при этом WS BTCUSDT доступен.
+    Запрет не обходится; недоступный каталог не восстанавливается догадкой из одного символа.
+26. Явный country-block → PUBLIC_API_REGION_RESTRICTED с hash/HTTP evidence; обычный 403 не
+    классифицируется как географический без доказательства. Добавлены два HTTP regression cases.

@@ -58,7 +58,7 @@ async def run():
         "observed_at_ms": int(time.time() * 1000),
         "requests": rows,
         "bybit_tls_issuer": await asyncio.to_thread(certificate_issuer),
-        "limitations": "Interception is observable; original origin-side cause needs gateway/origin logs",
+        "limitations": "Interpret only observed response bodies and TLS issuer; do not infer interception or geography without evidence",
     }
     path = Path("reports/network-diagnostics.json")
     path.parent.mkdir(exist_ok=True)

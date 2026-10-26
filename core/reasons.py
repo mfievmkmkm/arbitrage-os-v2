@@ -1,6 +1,7 @@
 from core.models import Reason
 
 REASONS = {
+    "PUBLIC_API_REGION_RESTRICTED": ("INFRA", "Источник явно блокирует public API по стране IP сервера"),
     Reason.SLIPPAGE: ("DEPTH", "Недостаточно объёма в пределах заданного проскальзывания"),
     "PUBLIC_API_HTML_UNAVAILABLE": (
         "INFRA",
