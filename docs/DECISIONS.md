@@ -58,3 +58,15 @@
     Запрет не обходится; недоступный каталог не восстанавливается догадкой из одного символа.
 26. Явный country-block → PUBLIC_API_REGION_RESTRICTED с hash/HTTP evidence; обычный 403 не
     классифицируется как географический без доказательства. Добавлены два HTTP regression cases.
+
+
+## Подготовка Railway · 27.10.2026
+
+27. Подключение подтверждено, текущие projects прочитаны без изменения. Create project
+    arbitrage-os-v2 заблокирован Free-plan resource limit; повторное list подтвердило отсутствие
+    частично созданного project. Не удаляем и не переиспользуем старые workloads для обхода квоты.
+28. Подготовлен reviewable deployment-plan JSON и расчёт caps. До owner budget approval по §14
+    не выполняются upgrade/payment, живые create-service/create-volume или accept-deploy.
+29. Legacy railway.json не добавляется: свежие официальные docs рекомендуют Infrastructure as Code;
+    подготовленный JSON явно не объявляется нативным IaC-файлом. При наличии доступа будет
+    применяться через staged MCP mutations и проверяться describe/get-staged-changes.

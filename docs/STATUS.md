@@ -2,6 +2,22 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Подготовка Railway · 27.10.2026 — блокер тарифа
+
+Railway подключён, список проектов проверен. Создание отдельного project `arbitrage-os-v2`
+отклонено платформой: **Free plan resource provision limit exceeded**. Повторная проверка:
+нового project нет, деплой/стадирование не начались, старые сервисы не менялись.
+
+Готов reviewable plan `configs/deployment/railway-observe-plan.json`: scanner + отдельный
+Postgres 16/2 GB volume, OBSERVE, bybit/bingx, protected variables, healthcheck и resource caps.
+Runtime source — f5fc31b, прошедший GitHub CI. Сам план не применён.
+
+Стоимость по текущим официальным тарифам: Hobby от $5/month с $5 included usage;
+CPU/RAM/storage при всех предложенных caps непрерывно — ~$27.80/month плюс egress,
+фактическая стоимость обычно отличается. Это не настроенный billing limit и не включает
+старые workload расходы. Нужны согласование платного тарифа/бюджета и обновление entitlement
+аккаунта; автоматический upgrade не выполнен. См. CLOUD_RUNBOOK.md и MASTER_SPEC §14.
+
 ## Последний результат: GitHub runner · 27.10.2026
 
 Запущено агентом, без ручного Run workflow владельцем. Коммит запуска `1e31fae`,
