@@ -198,14 +198,15 @@ def test_rejected_update_windows_preserve_counts_extremes_and_terminal_order():
         )
         scanner.record_signal(signal, previous)
         previous = signal
-    # One full start plus one aggregate, rather than 1000 alternating-reason rows.
-    scanner.flush_rejection_window(first.id)
+    # One unverified window retains all updates and its discovery transition.
+    scanner.flush_unverified_window(first.id)
     rows = list(scanner.journal.recent)
-    assert len(rows) == 2
-    window = rows[1]["aggregation"]
-    assert window["observations"] == 1000
-    assert window["rejection_counts"][Reason.IDENTITY] == 1000
+    assert len(rows) == 1
+    window = rows[0]["aggregation"]
+    assert window["observations"] == 1001
+    assert window["rejection_counts"][Reason.IDENTITY] == 1001
     assert window["rejection_counts"][Reason.BOOK] == 500
+    assert window["transitions"][0]["kind"] == "DISCOVERY"
     assert window["raw_spread_min_pct"] == 0 and window["raw_spread_max_pct"] == 9.99
     verified = replace(previous, stage="VERIFIED", rejection_codes=[])
     scanner.record_signal(verified, previous)
@@ -294,3 +295,26 @@ async def test_observation_health_log_never_contains_environment_secret_values(m
     assert report["event_type"] == "OBSERVATION_HEALTH"
     assert report["asset"] == "INFRA" and report["rejection_codes"] == []
     assert scanner.journal.recent[-1]["id"] == "INFRA:observation-health"
+
+
+def test_unverified_minute_windows_retain_episode_boundaries_without_coalescing_verified():
+    from core.evaluator import evaluate
+
+    scanner = Scanner()
+    a, b = instrument(asset_id=None), instrument("bingx", asset_id=None)
+    qa, qb, ba, bb, funding = market()
+    first = evaluate(a, b, qa, qb, ba, bb, funding, funding, scanner.cfg)
+    scanner.record_signal(first, None)
+    ended = replace(first, stage="EXPIRED")
+    scanner.record_terminal(ended, "SPREAD_BELOW_FILTER", -0.2)
+    reopened = replace(first, raw_spread_pct=2)
+    scanner.record_signal(reopened, None)
+    scanner.flush_unverified_window(first.id)
+    window = scanner.journal.recent[-1]["aggregation"]
+    assert [r["kind"] for r in window["transitions"]] == ["DISCOVERY", "SPREAD_BELOW_FILTER", "DISCOVERY"]
+    assert window["transitions"][1]["raw_spread_pct"] == -0.2
+    assert window["observations"] == 2
+    verified = replace(reopened, stage="VERIFIED", rejection_codes=[])
+    scanner.record_signal(verified, reopened)
+    assert scanner.journal.recent[-1]["stage"] == "VERIFIED"
+    assert "aggregation" not in scanner.journal.recent[-1]

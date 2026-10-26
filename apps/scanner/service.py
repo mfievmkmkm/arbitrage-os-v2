@@ -64,6 +64,7 @@ class Scanner:
         self.intervals = {}
         self.last_journal = {}
         self.rejection_windows = {}
+        self.unverified_windows = {}
         self.observed_rejections = Counter()
         self.started = time.time()
 
@@ -80,7 +81,75 @@ class Scanner:
                 if reason not in s.rejection_codes:
                     s.rejection_codes.append(reason)
                     self.rejections[reason] += 1
-                    self.journal.append(asdict(s))
+                    if Reason.IDENTITY in s.rejection_codes and reason != Reason.OUTAGE:
+                        self.record_unverified(s, "DATA_INVALIDATED")
+                    else:
+                        self.flush_unverified_window(s.id)
+                        self.journal.append(asdict(s))
+
+    def record_unverified(self, signal, kind, spread=None):
+        window = self.unverified_windows.setdefault(
+            signal.id,
+            {
+                "began": time.monotonic(),
+                "first_ms": int(time.time() * 1000),
+                "count": 0,
+                "reasons": Counter(),
+                "minimum": signal.raw_spread_pct,
+                "maximum": signal.raw_spread_pct,
+                "transitions": [],
+            },
+        )
+        window["last"] = signal
+        window["last_ms"] = int(time.time() * 1000)
+        value = signal.raw_spread_pct if spread is None else spread
+        if kind in ("DISCOVERY", "UPDATE"):
+            window["count"] += 1
+            window["reasons"].update(signal.rejection_codes)
+            window["minimum"] = min(window["minimum"], value)
+            window["maximum"] = max(window["maximum"], value)
+        if kind != "UPDATE":
+            window["transitions"].append(
+                {
+                    "kind": kind,
+                    "observed_at_ms": window["last_ms"],
+                    "raw_spread_pct": value,
+                    "rejection_codes": list(signal.rejection_codes),
+                }
+            )
+        if time.monotonic() - window["began"] >= 60 or len(window["transitions"]) >= 64:
+            self.flush_unverified_window(signal.id)
+
+    def flush_unverified_window(self, signal_id):
+        window = self.unverified_windows.pop(signal_id, None)
+        if not window:
+            return
+        self.journal.append(
+            {
+                **asdict(window["last"]),
+                "event_type": "UNVERIFIED_OBSERVATION_WINDOW",
+                "aggregation": {
+                    "first_observed_at_ms": window["first_ms"],
+                    "last_observed_at_ms": window["last_ms"],
+                    "observations": window["count"],
+                    "rejection_counts": dict(window["reasons"]),
+                    "raw_spread_min_pct": window["minimum"],
+                    "raw_spread_max_pct": window["maximum"],
+                    "transitions": window["transitions"],
+                    "policy": "UNVERIFIED_ONLY_60S_WINDOW; TRANSITIONS_RETAINED; NOT_TICK_REPLAY",
+                },
+            }
+        )
+        self.rejections.update(window["reasons"].keys())
+        self.metrics["unverified_windows_written"] += 1
+        self.metrics["unverified_updates_aggregated"] += window["count"]
+
+    def record_terminal(self, signal, kind, spread=None):
+        if Reason.IDENTITY in signal.rejection_codes:
+            self.record_unverified(signal, kind, spread)
+        else:
+            self.flush_rejection_window(signal.id)
+            self.journal.append(asdict(signal))
 
     def flush_rejection_window(self, signal_id):
         window = self.rejection_windows.pop(signal_id, None)
@@ -107,6 +176,10 @@ class Scanner:
 
     def record_signal(self, signal, prior):
         self.observed_rejections.update(signal.rejection_codes)
+        if Reason.IDENTITY in signal.rejection_codes:
+            self.record_unverified(signal, "DISCOVERY" if prior is None else "UPDATE")
+            return
+        self.flush_unverified_window(signal.id)
         if prior is None or prior.stage != signal.stage:
             self.flush_rejection_window(signal.id)
             self.journal.append(asdict(signal))
@@ -225,7 +298,7 @@ class Scanner:
                             self.flush_rejection_window(sid)
                             old_signal = self.signals.pop(sid)
                             old_signal.stage = "EXPIRED"
-                            self.journal.append(asdict(old_signal))
+                            self.record_terminal(old_signal, "SPREAD_BELOW_FILTER", float(raw))
                             self.last_journal.pop(sid, None)
                         continue
                     s = evaluate_sizes(
@@ -508,12 +581,15 @@ class Scanner:
                 if s.expires_at_ms <= now_ms and now_ms - s.observed_at_ms > 60000:
                     self.flush_rejection_window(sid)
                     s.stage = "EXPIRED"
-                    self.journal.append(asdict(s))
+                    self.record_terminal(s, "NO_COMPARISONS_60S")
                     del self.signals[sid]
                     self.last_journal.pop(sid, None)
             for sid, window in list(self.rejection_windows.items()):
                 if time.monotonic() - window["began"] >= 10:
                     self.flush_rejection_window(sid)
+            for sid, window in list(self.unverified_windows.items()):
+                if time.monotonic() - window["began"] >= 60:
+                    self.flush_unverified_window(sid)
             await asyncio.sleep(3)
 
     def status(self):
@@ -622,6 +698,7 @@ class Scanner:
                 "healthy": bool(self.journal.pool) and self.journal.last_write_error is None,
                 "last_write_error": self.journal.last_write_error,
                 "pending_rejection_windows": len(self.rejection_windows),
+                "pending_unverified_windows": len(self.unverified_windows),
             },
             "readiness": "OBSERVATION_ONLY"
             if len(coverage) == 2 and all(coverage[v]["fresh_quotes"] for v in coverage)
@@ -694,6 +771,8 @@ class Scanner:
                 pass
 
     async def close(self):
+        for sid in list(self.unverified_windows):
+            self.flush_unverified_window(sid)
         for sid in list(self.rejection_windows):
             self.flush_rejection_window(sid)
         self.stop.set()

@@ -2,6 +2,18 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Минутные агрегаты только непроверенных underlying · 27.10.2026
+
+46aa2b8: все четыре CI jobs SUCCESS; actual Railway SUCCESS, 180 s / 587228 quote events.
+Рост DB после исправления lifecycle ~17 kB/s, что всё ещё не обеспечивает 24h на Free.
+Evidence: evidence/railway-cache-fix-2026-10-27.json. Поэтому только непроверенные underlying
+получают 60 s windows с per-code counts, min/max spread, последним полным sample и timeline
+каждого discovery/end/data invalidation. По 64 transitions максимум, затем ранний flush.
+Никаких удалений существующей истории. Reviewed/VERIFIED events остаются отдельными.
+До flush или hard crash raw window может быть только в памяти до ~60 s; это явно не tick
+replay и не исполнение. Graceful shutdown сохраняет pending windows. Проверки локально:
+79 passed, 1 skipped, Ruff pass. Новая фактическая проверка роста после деплоя ещё впереди.
+
 ## Устранение ложных повторных discovery · 27.10.2026
 
 Aggregation a574859 прошла Linux/Windows/Postgres/Docker CI 40400973144 и развернулась

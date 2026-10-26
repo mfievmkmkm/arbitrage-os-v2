@@ -127,3 +127,13 @@
     через Railway logs, в Postgres остаётся каждые 600 s. Отчёт содержит только public market
     metrics, без environment values/DSN/credentials. Поля asset/rejection_codes сохраняют
     совместимость с Telegram history renderer.
+
+45. 46aa2b8 уменьшил фактический рост до ~17 kB/s, но 500 MB недостаточно для суток. Только
+    ASSET_IDENTITY_UNVERIFIED history теперь собирается в окна до 60 s с counts/min-max/latest
+    full sample и отдельным compact timeline всех discovery/end/data-invalidated переходов.
+    До 64 transitions/window; при достижении лимита window немедленно сбрасывается, без потери
+    границ episodes. Graceful close сбрасывает pending windows. При hard crash возможно до
+    60 s непроверенной raw history в памяти; это не журнал ордеров или принятых сделок.
+    Reviewed/VERIFIED transitions и реальные provider outages не сворачиваются этим правилом.
+    Существующие durable записи не удаляются и не переписываются. Политика raw aggregation
+    раскрывается в каждом event, pending unverified windows видны в /status.
