@@ -1,0 +1,88 @@
+{
+  "type": "SYNTHETIC_LOAD_NOT_REAL_MARKET",
+  "assets": 1200,
+  "events": 40000,
+  "seconds": 0.9604105739999795,
+  "events_per_second": 41648.85423262828,
+  "status": {
+    "mode": "OBSERVE",
+    "live_enabled": false,
+    "active_venues": [
+      "bybit",
+      "bingx"
+    ],
+    "uptime_seconds": 1,
+    "coverage": {
+      "bybit": {
+        "status": "PUBLIC_READY",
+        "discovered": 0,
+        "active": 0,
+        "connections": 0,
+        "exclusions": {},
+        "quote_age_p95_ms": 55.15836700010368,
+        "identified": 0,
+        "fresh_quotes": 1200,
+        "received_quotes": 1200,
+        "symbol_counterparts_unverified": 1200,
+        "no_counterpart": 0,
+        "depth_books": 0
+      },
+      "bingx": {
+        "status": "PUBLIC_READY",
+        "discovered": 0,
+        "active": 0,
+        "connections": 0,
+        "exclusions": {},
+        "quote_age_p95_ms": 55.156995000061215,
+        "identified": 0,
+        "fresh_quotes": 1200,
+        "received_quotes": 1200,
+        "symbol_counterparts_unverified": 1200,
+        "no_counterpart": 0,
+        "depth_books": 0
+      }
+    },
+    "dex_pools": 0,
+    "raw_current": 1200,
+    "verified_current": 0,
+    "executable": 0,
+    "paper_opened": 0,
+    "paper_closed": 0,
+    "event_processing_latency_ms": {
+      "p50": 0.555641000119067,
+      "p95": 1.1473459999251645,
+      "samples": 40000,
+      "meaning": "WS receive to event processed (not necessarily a comparison)"
+    },
+    "latency_ms": {
+      "p50": 0.5512649997854169,
+      "p95": 1.1215469999115157,
+      "samples": 38800,
+      "meaning": "WS receive to related route comparisons complete"
+    },
+    "process_cpu_seconds": 0.992700622,
+    "rss_bytes": 40767488,
+    "queue_lag_p95_ms": 1.1282770001344034,
+    "queue_depth": 0,
+    "metrics": {
+      "quote_events": 40000,
+      "pair_comparisons": 77600,
+      "candidate_updates": 38800,
+      "raw_discoveries": 1200
+    },
+    "rejections_journal_events": {
+      "ASSET_IDENTITY_UNVERIFIED": 1200,
+      "ORDERBOOK_UNAVAILABLE": 1200,
+      "FEE_UNAVAILABLE": 1200,
+      "FUNDING_UNAVAILABLE": 1200
+    },
+    "journal": {
+      "durable": false,
+      "written": 0,
+      "dropped": 0,
+      "failures": 0,
+      "pending": 1200
+    },
+    "readiness": "OBSERVATION_ONLY"
+  }
+}
