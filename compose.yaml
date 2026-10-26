@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: arbitrage
+      POSTGRES_USER: scanner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanner -d arbitrage"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+  scanner:
+    build: .
+    environment:
+      MODE: OBSERVE
+      ENABLED_CEX_VENUES: bybit,bingx
+      DATABASE_URL: postgresql://scanner:${POSTGRES_PASSWORD}@postgres:5432/arbitrage
+      CONTROL_TOKEN: ${CONTROL_TOKEN:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+  telegram:
+    build: .
+    command: ["python", "-m", "apps.telegram_bot.main"]
+    profiles: ["telegram"]
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_OWNER_ID: ${TELEGRAM_OWNER_ID:-}
+      CONTROL_TOKEN: ${CONTROL_TOKEN:-}
+      SCANNER_URL: http://scanner:8080
+    depends_on: [scanner]
+    restart: unless-stopped
+volumes:
+  postgres-data:
