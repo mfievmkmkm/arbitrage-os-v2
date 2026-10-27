@@ -302,3 +302,17 @@ async def test_journal_bounded_and_batch():
     stop.set()
     await j.run(stop)
     assert j.written == 1
+
+
+@pytest.mark.asyncio
+async def test_journal_overflow_latches_failure_and_stops_producer():
+    j = Journal(capacity=1)
+    j.stop = asyncio.Event()
+    j.append({"id": "first"})
+    j.append({"id": "overflow"})
+    assert j.stop.is_set()
+    assert j.fatal_error == "JOURNAL_QUEUE_FULL"
+    await j.run(j.stop)
+    assert j.written == 1
+    assert j.dropped == 1
+    assert j.fatal_error == "JOURNAL_QUEUE_FULL"
