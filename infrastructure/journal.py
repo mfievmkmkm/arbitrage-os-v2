@@ -13,6 +13,8 @@ class Journal:
         self.recent = deque(maxlen=500)
         self.written = self.dropped = self.failures = 0
         self.last_write_error = None
+        self.fatal_error = None
+        self.stop = None
         self.storage = {"state": "NOT_MEASURED"}
 
     async def monitor_storage(self, stop):
@@ -56,14 +58,36 @@ class Journal:
             import asyncpg
 
             self.pool = await asyncpg.create_pool(self.dsn, min_size=1, max_size=2, command_timeout=10)
-            async with self.pool.acquire() as conn:
-                await conn.execute("""CREATE TABLE IF NOT EXISTS signal_events (
+            try:
+                async with self.pool.acquire() as conn, conn.transaction():
+                    await conn.execute("SELECT pg_advisory_xact_lock(743291001)")
+                    await conn.execute("""CREATE TABLE IF NOT EXISTS scanner_schema_versions (
+                        version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now());""")
+                    version = await conn.fetchval("SELECT COALESCE(MAX(version), 0) FROM scanner_schema_versions")
+                    if version > 1:
+                        raise RuntimeError("database schema is newer than this scanner")
+                    await conn.execute("""CREATE TABLE IF NOT EXISTS signal_events (
                     event_id UUID PRIMARY KEY, observed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                     signal_id TEXT NOT NULL, payload JSONB NOT NULL);
                     CREATE INDEX IF NOT EXISTS signal_time_idx ON signal_events(observed_at);
                     CREATE INDEX IF NOT EXISTS signal_id_time_idx ON signal_events(signal_id, observed_at);
                     CREATE TABLE IF NOT EXISTS scanner_settings (
                     key TEXT PRIMARY KEY, value JSONB NOT NULL);""")
+                    await conn.execute("INSERT INTO scanner_schema_versions(version) VALUES(1) ON CONFLICT DO NOTHING")
+                    for name in ("signal_events", "scanner_settings", "signal_time_idx", "signal_id_time_idx"):
+                        if not await conn.fetchval("SELECT to_regclass($1)", name):
+                            raise RuntimeError(f"missing database object: {name}")
+                    probe_id = uuid.uuid4()
+                    await conn.execute(
+                        "INSERT INTO signal_events(event_id,signal_id,payload) VALUES($1,$2,$3)",
+                        probe_id, "INFRA:schema-probe", '{"id":"INFRA:schema-probe"}',
+                    )
+                    if not await conn.fetchval("SELECT EXISTS(SELECT 1 FROM signal_events WHERE event_id=$1)", probe_id):
+                        raise RuntimeError("journal probe was not readable")
+            except BaseException:
+                await self.pool.close()
+                self.pool = None
+                raise
 
     def append(self, payload):
         serialized = json.dumps(payload, default=str)
@@ -73,6 +97,12 @@ class Journal:
             self.queue.put_nowait(event)
         except asyncio.QueueFull:
             self.dropped += 1
+            self.fail_closed("JOURNAL_QUEUE_FULL")
+
+    def fail_closed(self, reason):
+        self.fatal_error = self.fatal_error or reason
+        if self.stop is not None:
+            self.stop.set()
 
     async def run(self, stop):
         batch = []
@@ -97,6 +127,7 @@ class Journal:
                 except Exception as exc:
                     self.failures += 1
                     self.last_write_error = type(exc).__name__
+                    self.fail_closed("JOURNAL_WRITE_FAILED")
             if stop.is_set() and batch and self.failures:
                 # Shutdown must report unsaved records rather than hang indefinitely.
                 break
