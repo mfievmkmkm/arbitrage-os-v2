@@ -695,7 +695,9 @@ class Scanner:
                 "failures": self.journal.failures,
                 "pending": self.journal.queue.qsize(),
                 "storage": self.journal.storage,
-                "healthy": bool(self.journal.pool) and self.journal.last_write_error is None,
+                "healthy": bool(self.journal.pool) and self.journal.last_write_error is None
+                and self.journal.fatal_error is None and not self.journal.dropped,
+                "fatal_error": self.journal.fatal_error,
                 "last_write_error": self.journal.last_write_error,
                 "pending_rejection_windows": len(self.rejection_windows),
                 "pending_unverified_windows": len(self.unverified_windows),
@@ -707,6 +709,7 @@ class Scanner:
 
     async def start(self, session):
         self.session = session
+        self.journal.stop = self.stop
         await self.journal.connect()
         if self.journal.pool:
             async with self.journal.pool.acquire() as conn:
