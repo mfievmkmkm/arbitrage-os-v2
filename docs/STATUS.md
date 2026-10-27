@@ -2,6 +2,29 @@
 
 **Продолжение существующего проекта. OBSERVE. LIVE OFF. Gate 1A НЕ ПРИНЯТ. Полный Stage 1 НЕ ГОТОВ.**
 
+## Авария хранения · 27.10.2026 · повторная проверка
+
+Gate 1A НЕ ПРИНЯТ. PostgreSQL runtime logs: PANIC / No space left on device,
+recovery loop. Railway DISK_USAGE_GB current=0.495476736 на volume 500 MB.
+Scanner uptime 44794 s: journal persisted=136914, dropped=677236, failures=69972,
+pending=5000, last_write_error=CannotConnectNowError, healthy=false.
+Это неполная история с потерями, НЕ доказательство успешного суточного наблюдения.
+
+Read-back Railway: running deployment 2776a66a-4cfc-499a-a22f-2726acc29f43,
+source 46aa2b8; исправление 64564f3 остаётся STAGED, patch
+054bb354-e5c9-4124-aadd-6b0f5be69989. Его экономия диска в облаке НЕ проверена.
+Попытка безопасно остановить scanner через regions.numReplicas=0 отклонена MCP
+валидацией (minimum 1), остановка НЕ выполнена. Статус SUCCESS контейнера БД
+не означает готовность PostgreSQL. История и volume не удалялись; тариф не менялся.
+
+Восстановление без оплаты: сначала остановить scanner, затем получить отдельное
+разрешение на сброс именно новой OBSERVE БД (предыдущее удаление касалось старых
+сервисов). Если сохранение истории обязательно — сначала согласовать доступную
+ёмкость для восстановления/экспорта; при recovery loop SQL export сейчас не доказан.
+После восстановления применить исправление, добавить остановку при отказах durable
+журнала и ранний storage budget с запасом на WAL, проверить фактический размер всего
+volume и скорость роста, только потом начать новое непрерывное окно ≥24h.
+
 ## Минутные агрегаты только непроверенных underlying · 27.10.2026
 
 46aa2b8: все четыре CI jobs SUCCESS; actual Railway SUCCESS, 180 s / 587228 quote events.
