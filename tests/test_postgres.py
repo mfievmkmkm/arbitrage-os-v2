@@ -20,6 +20,10 @@ async def test_postgres_persists_after_reconnect():
     await j.close()
     recovered = Journal(dsn)
     await recovered.connect()
+    async with recovered.pool.acquire() as conn:
+        assert await conn.fetchval("SELECT max(version) FROM scanner_schema_versions") == 1
+        assert await conn.fetchval("SELECT count(*) FROM scanner_schema_versions WHERE version=1") == 1
+        assert await conn.fetchval("SELECT to_regclass('signal_events')") is not None
     assert any(r["id"] == "integration-restart" for r in await recovered.history())
     assert all(r["id"] == "integration-restart" for r in await recovered.history(200, "integration-restart"))
     assert await recovered.history(200, "non-existent-health-probe") == []
